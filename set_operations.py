@@ -12,7 +12,7 @@ coordinates = dict()
 #
 
 def distance( a,b,c,d ):
-    return max( abs(a-c), abs(b-d) )
+    return (a-c)**2 + (b-d)**2
 
 #
 # Read in all coordinates. The result is a dictionary that maps a time
@@ -48,3 +48,11 @@ for t in sorted( coordinates.keys() ):
         print("Average changes    : %f" % (l4/l2) )
         print("Average overlap    : %f" % (l3/min(l1,l2)))
         print("Average non-matches: %f" % (l5/(l1+l2)))
+
+        with open( ("/tmp/Matches_%02d" % t) + ".txt", "w") as f:
+            for (x,y) in previous:
+                distances             = list( map( lambda ab: distance(x,y,ab[0],ab[1]), coordinates[t]) )
+                indexedDistances      = zip(distances, range(len(distances)))
+                minDistance, minIndex = min(indexedDistances)
+                a,b                   = coordinates[t][minIndex]
+                print("%d\t%d\t%d\t%d" % (x,y,a,b), file=f)

@@ -21,6 +21,11 @@ for filename in sys.argv[1:]:
         data = None # Contains matrix data
         ii   = 0    # Current data index for filling matrix
 
+        # Stores only those coordinates (given as an x and y position)
+        # that are nonzero. This permits to match adjacent time steps
+        # in a very concise and sparse manner.
+        nonZero = list()
+
         for line in f:
             if reDimensions.match(line):
                 result = reDimensions.match(line)
@@ -58,10 +63,21 @@ for filename in sys.argv[1:]:
                     iy     = ii // width 
                     ii     = ii + 1
 
+                    if d[k] > 0:
+                        nonZero.append( (ix,iy) )
+
                     data[iy][ix] = d[k]
 
-    output =   "/tmp/"\
+    outputCoordinates = "/tmp/"\
+             + os.path.splitext( os.path.basename(filename) )[0]\
+             + ".txt"
+
+    with open(outputCoordinates, "w") as g:
+        for (x,y) in nonZero:
+            print("%d\t%d" % (x,y), file=g)
+
+    outputImage =   "/tmp/"\
              + os.path.splitext( os.path.basename(filename) )[0]\
              + ".png"
 
-    Image.fromarray(data).convert('L').save( output )
+    Image.fromarray(data).convert('L').save( outputImage )

@@ -23,6 +23,7 @@ do for [t = 2:84] {
 
   set size ratio 0.5
   set terminal svg background rgb 'white' size 1000,1000
+  set key inside
   set output out
 
   set pointsize 0.5

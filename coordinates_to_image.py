@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-from skimage import measure
+from collections import defaultdict
+from skimage     import measure
 
 import matplotlib.pyplot as plt
 
@@ -20,7 +21,25 @@ for filename in sys.argv[1:]:
             (x,y)       = [ int(a) for a in line.split()[0:2] ]
             image[y][x] = 1
 
-    labels = measure.label( image, background=0 )
+    labels       = measure.label( image, background=0 )
+    nrows, ncols = labels.shape
 
-    plt.imshow(labels, cmap='Set1')
-    plt.show()
+    components = defaultdict(list)
+
+    #
+    # Separate connected components
+    #
+    for y in range(nrows):
+        for x in range(ncols):
+            component = labels[y][x]
+            if component > 0:
+                components[component].append( (x,y) )
+
+    #
+    # Stored connected components
+    #
+    with open("/tmp/" + name + "_components.txt", "w") as f:
+        for component in sorted( components.keys() ):
+            for (x,y) in components[component]:
+                print("%d\t%d" % (x,y), file=f)
+            print("\n", file=f)

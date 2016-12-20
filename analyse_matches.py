@@ -19,6 +19,7 @@ for filename in sys.argv[1:]:
 
     print("Processed %s:" % filename )
     print("  Minimum distance: %f" % min( distances ) )
-    print("  Mean distance  :  %f" % numpy.mean( distances ) )
-    print("  Median distance:  %f" % numpy.median( distances ) )
+    print("  Mean distance   : %f" % numpy.mean( distances ) )
+    print("  Median distance : %f" % numpy.median( distances ) )
     print("  Maximum distance: %f" % max( distances ) )
+    print("  Quantile <= 2   : %f" % ( len( [ x for x in distances if x <= 2 ] ) / len(distances) ) )

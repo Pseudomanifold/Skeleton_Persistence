@@ -22,7 +22,6 @@ do for [t = 2:84] {
   set yrange [0:400]
 
   set size ratio 0.5
-  set key outside
   set terminal svg background rgb 'white' size 1000,1000
   set output out
 

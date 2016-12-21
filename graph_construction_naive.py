@@ -46,3 +46,9 @@ with open(sys.argv[1]) as f:
 
                 if u < v:
                     edges.append( (u,v) )
+
+# TODO:
+# - Identify segments (union-find)
+# - Obtain 'point-to-segment' map
+# - Upon matching, keep track of how many points of a segment are being matched
+# - 100% segments may be ignored (by greedy matching)

@@ -52,3 +52,20 @@ do for [t = 2:84] {
        in using 3:4 w p pt 7,\
        in using 1:2:($3-$1):($4-$2) with vectors,\
 }
+
+do for [t = 2:84] {
+  in  = sprintf('Matches_%02d_unmatched.txt', t)
+  out = sprintf('Matches_%02d_unmatched.svg', t)
+
+  set xrange [0:800]
+  set yrange [0:400]
+
+  set size ratio 0.5
+  set terminal svg background rgb 'white' size 1000,1000
+  set key off
+  set output out
+
+  set pointsize 0.5
+
+  plot in using 1:2 w p pt 7
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-from skimage     import measure
+from skimage     import measure, io
 
 import matplotlib.pyplot as plt
 
@@ -13,7 +13,7 @@ width  = 839
 height = 396
 
 for filename in sys.argv[1:]:
-    name      = os.path.splitext( os.path.basename(filename) )[0]
+    name  = os.path.splitext( os.path.basename(filename) )[0]
     image = numpy.zeros( (height,width) )
     
     with open(filename) as f:
@@ -21,6 +21,9 @@ for filename in sys.argv[1:]:
             (x,y)       = [ int(a) for a in line.split()[0:2] ]
             image[y][x] = 1
 
+    # Store image
+    io.imsave( "/tmp/" + name + ".png", image )
+        
     labels       = measure.label( image, background=0 )
     nrows, ncols = labels.shape
 

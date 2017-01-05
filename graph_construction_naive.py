@@ -86,6 +86,7 @@ with open(sys.argv[1]) as f:
     coordinates    = dict()
     edges          = list()
     vertices       = set()
+    degrees        = dict()
 
     for index,line in enumerate(f):
         (x,y)                   = [ int(a) for a in line.split() ]
@@ -105,8 +106,11 @@ with open(sys.argv[1]) as f:
                 vertices.add(v)
 
                 if u < v:
-                    edges.append( (u,v) )
+                    degrees[u] = degrees.get(u, 0) + 1
+                    degrees[v] = degrees.get(v, 0) + 1
 
+                    edges.append( (u,v) )
+    
     #
     # Calculate connected components
     #
@@ -118,6 +122,24 @@ with open(sys.argv[1]) as f:
 
     for root in uf.roots():
         print(root, len(uf.vertices(root)))
+
+    #
+    # Segment the graph
+    #
+
+    regularVertices  = [ vertex for vertex in vertices if degrees[vertex] <= 2 ]
+    partitionedEdges = [ (u,v) for (u,v) in edges if degrees[u] <= 2 and degrees[v] <= 2 ]
+    branchEdges      = [ (u,v) for (u,v) in edges if degrees[u] > 2 or degrees[v] > 2 ]
+
+    ufSegments = UnionFind(regularVertices)
+
+    for (u,v) in partitionedEdges:
+        ufSegments.merge(u,v)
+
+    for root in ufSegments.roots():
+        print(root, len(ufSegments.vertices(root)))
+
+    # TODO: Add missing vertices to segments
 
 # TODO:
 # - Identify segments (union-find)

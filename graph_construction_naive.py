@@ -54,7 +54,7 @@ class UnionFind:
             if self.find(vertex) == root:
                 result.append( vertex )
 
-        return result
+        return sorted(result)
 
 """
 Basic node class

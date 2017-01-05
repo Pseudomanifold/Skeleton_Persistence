@@ -51,10 +51,7 @@ for t in sorted( coordinates.keys() ):
                 a,b                   = coordinates[t][minIndex]
                 print("%d\t%d\t%d\t%d" % (x,y,a,b), file=f)
 
-                source = previous.index( (x,y) )
-                target = current.index( (a,b) )
-
-                forwardEdges.add( (source,target) )
+                forwardEdges.add( ( x,y,a,b) )
 
         with open( ("/tmp/Matches_%02d_backward" % t) + ".txt", "w") as f:
             for (x,y) in current:
@@ -64,10 +61,12 @@ for t in sorted( coordinates.keys() ):
                 a,b                   = coordinates[t-1][minIndex]
                 print("%d\t%d\t%d\t%d" % (x,y,a,b), file=f)
 
-                source = current.index( (x,y) )
-                target = previous.index( (a,b) )
-
                 # Flip the edges: The first index should always refer to
                 # the previous time step. This makes merging both edge
                 # sets easier.
-                backwardEdges.add( (target,source) )
+                backwardEdges.add( ( (a,b,x,y) ) )
+
+        union = forwardEdges.union( backwardEdges )
+        with open( ("/tmp/Matches_%02d_union" % t) + ".txt", "w") as f:
+            for (a,b,c,d) in union:
+                print("%d\t%d\t%d\t%d" % (a,b,c,d), file=f)

@@ -35,8 +35,8 @@ for filename in sys.argv[1:]:
 #
 for t in sorted( coordinates.keys() ):
     if t > 1:
-        previous = sorted( coordinates[t-1] )
-        current  = sorted( coordinates[t] )
+        previous = coordinates[t-1]
+        current  = coordinates[t]
 
         print("Processing t = %d" % t)
 

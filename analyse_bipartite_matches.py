@@ -15,11 +15,18 @@
 #      in the current time step.
 
 import collections
+import os
 import sys
 
 """ Calculates the Euclidean distance between two pixels """
 def distance( a,b,c,d ):
     return (a-c)**2 + (b-d)**2
+
+""" Prints a set of pixels """
+def printPixels(pixels):
+    for (a,b) in pixels:
+        print("%d\t%d" % (a,b))
+    print("\n")
 
 # Stores matches for the current time step (a) and the subsequent time
 # step (b). The key is a pixel tuple here, while the value stores all
@@ -33,6 +40,12 @@ allEdges       = set()
 oneToOneEdges  = set()
 oneToManyEdges = set()
 manyToOneEdges = set()
+
+# Partitions pixels in the current time step according to how they can
+# be assigned to pixels in the subsequent time step.
+created    = set()
+destroyed  = set()
+persisting = set()
 
 with open(sys.argv[1]) as f:
     for line in f:
@@ -57,11 +70,14 @@ for (a,b) in sorted( aMatches.keys() ):
     if len(aPartners) == 1:
         (c,d)     = aPartners[0]
         bPartners = bMatches[ (c,d) ]
+
         if len(bPartners) == 1:
             numOneToOneMatches += 1
             oneToOneEdges.add( (a,b,c,d) )
 
-print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches) )
+            persisting.add( (a,b) )
+
+print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches), file=sys.stderr)
 
 #
 # Find one-to-many matches
@@ -79,10 +95,13 @@ for (a,b) in sorted( aMatches.keys() ):
                 break
         if singleMatch:
             numOneToManyMatches += len(matches)
+
             for (c,d) in matches:
                 oneToManyEdges.add( (a,b,c,d) )
 
-print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToManyMatches / numMatches) )
+            created.add( (a,b) )
+
+print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToManyMatches / numMatches), file=sys.stderr)
 
 #
 # Find many-to-one matches
@@ -100,10 +119,12 @@ for (c,d) in sorted( bMatches.keys() ):
                 break
         if singleMatch:
             numManyToOneMatches += len(matches)
+
             for (a,b) in matches:
                 manyToOneEdges.add( (a,b,c,d) )
+                destroyed.add( (a,b) )
 
-print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, numManyToOneMatches / numMatches) )
+print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, numManyToOneMatches / numMatches), file=sys.stderr)
 
 #
 # Irregular edges
@@ -111,4 +132,12 @@ print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, nu
 
 irregularEdges = allEdges - oneToOneEdges - oneToManyEdges - manyToOneEdges
 
-print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(irregularEdges) / numMatches) )
+print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(irregularEdges) / numMatches), file=sys.stderr)
+
+#
+# Print "classified" pixels
+#
+
+printPixels(persisting)
+printPixels(created)
+printPixels(destroyed)

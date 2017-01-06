@@ -15,8 +15,13 @@
 #      in the current time step.
 
 import collections
+import re
 import os
 import sys
+
+# Prefix for reading the skeleton file that corresponds to a given set
+# of matches.
+skeletonPrefix = "viscfing_1-"
 
 """ Calculates the Euclidean distance between two pixels """
 def distance( a,b,c,d ):
@@ -47,7 +52,16 @@ created    = set()
 destroyed  = set()
 persisting = set()
 
-with open(sys.argv[1]) as f:
+filename = sys.argv[1]
+t        = 0
+
+with open(filename) as f:
+
+    # Note that matches for t=55 correspond to finding a matching
+    # between time steps t=54 and t=55. Hence the subtraction.
+    t = int( re.match(r'.*_(\d\d)_.*', filename ).group(1) )
+    t = t-1
+
     for line in f:
         (a,b,c,d) = [ int(x) for x in line.split() ]
 
@@ -141,3 +155,13 @@ print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(
 printPixels(persisting)
 printPixels(created)
 printPixels(destroyed)
+
+#
+# Load the corresponding skeleton and extend the information to its
+# segments
+#
+
+skeletonPath =   os.path.abspath(filename+"/../../") + "/"\
+               + skeletonPrefix                           \
+               + ("%02d" % t)                             \
+               + ".txt"

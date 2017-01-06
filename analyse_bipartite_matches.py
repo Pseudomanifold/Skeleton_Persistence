@@ -29,7 +29,10 @@ def distance( a,b,c,d ):
 aMatches = collections.defaultdict(list)
 bMatches = collections.defaultdict(list)
 
-numMatches = 0
+allEdges       = set()
+oneToOneEdges  = set()
+oneToManyEdges = set()
+manyToOneEdges = set()
 
 with open(sys.argv[1]) as f:
     for line in f:
@@ -37,8 +40,10 @@ with open(sys.argv[1]) as f:
 
         aMatches[ (a,b) ].append( (c,d) )
         bMatches[ (c,d) ].append( (a,b) )
-        
-        numMatches += 1
+
+        allEdges.add( (a,b,c,d) )
+
+numMatches = len(allEdges)
 
 #
 # Find one-to-one matches. As this task is symmetrical by nature, it
@@ -50,9 +55,11 @@ numOneToOneMatches = 0
 for (a,b) in sorted( aMatches.keys() ):
     aPartners = aMatches[ (a,b) ]
     if len(aPartners) == 1:
-        bPartners = bMatches[ aPartners[0] ]
+        (c,d)     = aPartners[0]
+        bPartners = bMatches[ (c,d) ]
         if len(bPartners) == 1:
             numOneToOneMatches += 1
+            oneToOneEdges.add( (a,b,c,d) )
 
 print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches) )
 
@@ -72,6 +79,8 @@ for (a,b) in sorted( aMatches.keys() ):
                 break
         if singleMatch:
             numOneToManyMatches += len(matches)
+            for (c,d) in matches:
+                oneToManyEdges.add( (a,b,c,d) )
 
 print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToManyMatches / numMatches) )
 
@@ -91,9 +100,15 @@ for (c,d) in sorted( bMatches.keys() ):
                 break
         if singleMatch:
             numManyToOneMatches += len(matches)
+            for (a,b) in matches:
+                manyToOneEdges.add( (a,b,c,d) )
 
 print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, numManyToOneMatches / numMatches) )
 
 #
-# Find many-to-many matches
+# Irregular edges
 #
+
+irregularEdges = allEdges - oneToOneEdges - oneToManyEdges - manyToOneEdges
+
+print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(irregularEdges) / numMatches) )

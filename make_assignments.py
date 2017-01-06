@@ -3,6 +3,9 @@
 # Calculates potential assignments between the skeletons of two
 # different time steps. Assignments are made based on the nearest
 # neighbour.
+#
+# The script attempts to be smart and reads the time step from the
+# filename of a given skeleton.
 
 import os
 import re

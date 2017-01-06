@@ -19,6 +19,8 @@ import re
 import os
 import sys
 
+import skeleton_to_segments as skel
+
 # Prefix for reading the skeleton file that corresponds to a given set
 # of matches.
 skeletonPrefix = "viscfing_1-"
@@ -165,3 +167,17 @@ skeletonPath =   os.path.abspath(filename+"/../../") + "/"\
                + skeletonPrefix                           \
                + ("%02d" % t)                             \
                + ".txt"
+
+segments               = skel.getSegments(skeletonPath)
+pixelToSegment         = dict()
+mappedPixelsPerSegment = dict()
+
+for index,segment in enumerate(segments):
+    for pixel in segment:
+        pixelToSegment[pixel]         = index
+        mappedPixelsPerSegment[index] = mappedPixelsPerSegment.get(index, 0) + 1
+
+for index in sorted(mappedPixelsPerSegment.keys()):
+    numPixels       = len(segments[index])
+    numMappedPixels = mappedPixelsPerSegment[index]
+    print("Ratio of mapped pixels = %.3f" % (numMappedPixels / numPixels), file=sys.stderr)

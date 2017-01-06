@@ -4,6 +4,8 @@
 # by having at least one irregular end point, meaning that there is
 # a node whose degree is != 2.
 
+import collections
+
 # FIXME: Make this configurable somewhere
 width  = 839 
 height = 396
@@ -71,7 +73,7 @@ def valid(x,y):
 Returns all valid neighbours of a pixel. This function assumes a regular
 8-neighbourhood for each pixel.
 """
-def neighbours(x,y):
+def validNeighbours(x,y):
     offset = [
         ( 0,-1),
         (+1,-1),
@@ -88,21 +90,24 @@ def neighbours(x,y):
 """ Partitions a skeleton into its segments """
 def getSegments(filename):
     with open(filename) as f:
-        coordinates    = dict()
+        coordinates    = dict() # Maps a coordinate to an index
+        indices        = dict() # Maps an index to a coordinate
         edges          = list()
         vertices       = set()
         degrees        = dict()
+        neighbours     = collections.defaultdict(list)
 
         for index,line in enumerate(f):
             (x,y)                   = [ int(a) for a in line.split() ]
             coordinates [ (x,y) ]   = index
+            indices[ index ]        = (x,y)
 
         #
         # Graph creation
         #
 
         for (x,y) in sorted( coordinates.keys() ):
-            for (a,b) in neighbours(x,y):
+            for (a,b) in validNeighbours(x,y):
                 if (a,b) in coordinates:
                     u = coordinates[ (x,y) ]
                     v = coordinates[ (a,b) ]
@@ -115,24 +120,20 @@ def getSegments(filename):
                         degrees[v] = degrees.get(v, 0) + 1
 
                         edges.append( (u,v) )
+
+                        # That's a rather wasteful way of permitting queries
+                        # about the neighbours of vertices, but I shall use
+                        # it later to extend all identified segments.
+                        neighbours[u].append(v)
+                        neighbours[v].append(u)
+
         
-        #
-        # Calculate connected components
-        #
-
-        uf = UnionFind(vertices)
-
-        for (u,v) in edges:
-            uf.merge(u,v)
-
-        for root in uf.roots():
-            print(root, len(uf.vertices(root)))
-
         #
         # Segment the graph
         #
 
         regularVertices  = [ vertex for vertex in vertices if degrees[vertex] <= 2 ]
+        branchVertices   = [ vertex for vertex in vertices if degrees[vertex] > 2  ]
         partitionedEdges = [ (u,v) for (u,v) in edges if degrees[u] <= 2 and degrees[v] <= 2 ]
         branchEdges      = [ (u,v) for (u,v) in edges if degrees[u] > 2 or degrees[v] > 2 ]
 
@@ -141,7 +142,25 @@ def getSegments(filename):
         for (u,v) in partitionedEdges:
             ufSegments.merge(u,v)
 
-        for root in ufSegments.roots():
-            print(root, len(ufSegments.vertices(root)))
+        segments = dict( list() )
 
-        # TODO: Add missing vertices to segments
+        for root in ufSegments.roots():
+            segments[root] = ufSegments.vertices(root)
+
+        # Append branch vertices to all matching segments
+        for vertex in branchVertices:
+            for neighbour in neighbours[vertex]:
+                if neighbour in regularVertices:
+                    root = ufSegments.find(neighbour) 
+                    segments[root].append(vertex)
+
+        result = []
+
+        for segment in segments.values():
+            s = []
+            for index in segment:
+                s.append( indices[index] )
+
+            result.append(s)
+
+        return result

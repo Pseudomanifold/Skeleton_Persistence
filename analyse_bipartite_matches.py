@@ -45,16 +45,16 @@ with open(sys.argv[1]) as f:
 # suffices to traverse one of the dictionaries.
 #
 
-numRegularMatches = 0
+numOneToOneMatches = 0
 
 for (a,b) in sorted( aMatches.keys() ):
     aPartners = aMatches[ (a,b) ]
     if len(aPartners) == 1:
         bPartners = bMatches[ aPartners[0] ]
         if len(bPartners) == 1:
-            numRegularMatches += 1
+            numOneToOneMatches += 1
 
-print("Regular matches: %d/%d (%.3f)" % (numRegularMatches, numMatches, numRegularMatches / numMatches) )
+print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches) )
 
 #
 # Find one-to-many matches
@@ -65,9 +65,13 @@ numOneToManyMatches = 0
 for (a,b) in sorted( aMatches.keys() ):
     matches = aMatches[ (a,b) ]
     if len(matches) > 1:
+        singleMatch = True
         for (c,d) in matches:
-            if len( bMatches[ (c,d) ] ) == 1:
-                numOneToManyMatches += 1
+            if len( bMatches[ (c,d) ] ) != 1:
+                singleMatch = False
+                break
+        if singleMatch:
+            numOneToManyMatches += len(matches)
 
 print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToManyMatches / numMatches) )
 
@@ -80,8 +84,16 @@ numManyToOneMatches = 0
 for (c,d) in sorted( bMatches.keys() ):
     matches = bMatches[ (c,d) ]
     if len(matches) > 1:
+        singleMatch = True
         for (a,b) in matches:
-            if len( aMatches[ (a,b) ] ) == 1:
-                numManyToOneMatches += 1
+            if len( aMatches[ (a,b) ] ) != 1:
+                singleMatch = False
+                break
+        if singleMatch:
+            numManyToOneMatches += len(matches)
 
 print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, numManyToOneMatches / numMatches) )
+
+#
+# Find many-to-many matches
+#

@@ -174,8 +174,12 @@ mappedPixelsPerSegment = dict()
 
 for index,segment in enumerate(segments):
     for pixel in segment:
-        pixelToSegment[pixel]         = index
-        mappedPixelsPerSegment[index] = mappedPixelsPerSegment.get(index, 0) + 1
+        pixelToSegment[pixel] = index
+
+for pixel in persisting:
+    if pixel in pixelToSegment:
+        si                         = pixelToSegment[pixel]
+        mappedPixelsPerSegment[si] = mappedPixelsPerSegment.get(index,0) + 1
 
 for index in sorted(mappedPixelsPerSegment.keys()):
     numPixels       = len(segments[index])

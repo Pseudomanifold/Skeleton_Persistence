@@ -44,6 +44,22 @@ def printPixels(pixels):
         print("%d\t%d" % (a,b))
     print("\n")
 
+"""
+Updates a set of unmatched pixels. Traverses a skeleton file and checks whether
+a match exists. If not, the pixel is added to a set.
+"""
+def findUnmatchedPixelsInSkeleton(matches, filename):
+    unmatched = set()
+    n         = 0
+    with open(filename) as f:
+        for line in f:
+            (x,y) = [ int(a) for a in line.split() ]
+            if (x,y) not in matches:
+                unmatched.add( (x,y) )
+            n += 1
+
+    return unmatched, n
+
 # Stores matches for the current time step (a) and the subsequent time
 # step (b). The key is a pixel tuple here, while the value stores all
 # the corresponding matches.
@@ -51,6 +67,12 @@ def printPixels(pixels):
 # Note that both structures are by necessity _directed_.
 aMatches = collections.defaultdict(list)
 bMatches = collections.defaultdict(list)
+
+# Stores all pixels in the current time step (a) that have a match in the
+# subsequent time step. Note that this means that they have been found in
+# the backward matching step. 
+aHaveMatch = set()
+bHaveMatch = set()
 
 allEdges       = set()
 oneToOneEdges  = set()
@@ -74,7 +96,19 @@ with open(filename) as f:
     t = t-1
 
     for line in f:
-        (a,b,c,d) = [ int(x) for x in line.split() ]
+        (a,b,direction,c,d) = line.split() 
+        (a,b,c,d)           = ( int(a), int(b), int(c), int(d) )
+
+        # Pixel (c,d) has at least one match, induced by the current time step,
+        # hence there is some structure that persists until that time step.
+        if direction == "->":
+            bHaveMatch.add( (c,d) )
+
+        # Pixel (a,b) has at least one match, induced by the subsequent time
+        # step, hence there is some structure that persists until that time
+        # step.
+        elif direction == "<-":
+            aHaveMatch.add( (a,b) )
 
         aMatches[ (a,b) ].append( (c,d) )
         bMatches[ (c,d) ].append( (a,b) )
@@ -166,6 +200,25 @@ print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(
 printPixels(persisting)
 printPixels(created)
 printPixels(destroyed)
+
+#
+# Load the skeleton of the current time step and of the previous time step. Use
+# this to determine structures that have been created (unmatched pixels in the
+# forward matching) or destroyed (unmatched pixels in the backward matching).
+#
+
+aSkeletonPath = makeSkeletonPath(filename,t  )
+bSkeletonPath = makeSkeletonPath(filename,t+1)
+
+# Unmatched pixels in the current time step (a) and in the subsequent time step
+# (b). Information about these matches is being used to figure out whether a
+# certain segment has _most likely_ been created or destroyed in a certain time
+# step.
+aUnmatched, aPixels = findUnmatchedPixelsInSkeleton(aHaveMatch, aSkeletonPath)
+bUnmatched, bPixels = findUnmatchedPixelsInSkeleton(bHaveMatch, bSkeletonPath)
+
+print("There are %d/%d unmatched pixels in the current time step" % (len(aUnmatched), aPixels))
+print("There are %d/%d unmatched pixels in the subsequent time step" % (len(bUnmatched), bPixels))
 
 #
 # Load the corresponding skeleton and extend the information to its

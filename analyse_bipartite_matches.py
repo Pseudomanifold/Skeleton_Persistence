@@ -17,6 +17,7 @@
 import collections
 import re
 import os
+import statistics
 import sys
 
 import skeleton_to_segments as skel
@@ -220,26 +221,56 @@ bUnmatched, bPixels = findUnmatchedPixelsInSkeleton(bHaveMatch, bSkeletonPath)
 print("There are %d/%d unmatched pixels in the current time step" % (len(aUnmatched), aPixels))
 print("There are %d/%d unmatched pixels in the subsequent time step" % (len(bUnmatched), bPixels))
 
+
 #
 # Load the corresponding skeleton and extend the information to its
 # segments
 #
 
-skeletonPath           = makeSkeletonPath(filename, t)
-segments               = skel.getSegments(skeletonPath)
-pixelToSegment         = dict()
-mappedPixelsPerSegment = dict()
+skeletonPath              = makeSkeletonPath(filename, t)
+segments                  = skel.getSegments(skeletonPath)
+pixelToSegment            = dict()
+mappedPixelsPerSegment    = dict()
+mappedPixelsPerSegmentNew = dict()
 
 for index,segment in enumerate(segments):
     for pixel in segment:
         pixelToSegment[pixel] = index
 
-for pixel in persisting:
-    if pixel in pixelToSegment:
-        si                         = pixelToSegment[pixel]
-        mappedPixelsPerSegment[si] = mappedPixelsPerSegment.get(index,0) + 1
+ratios = list()
 
-for index in sorted(mappedPixelsPerSegment.keys()):
-    numPixels       = len(segments[index])
-    numMappedPixels = mappedPixelsPerSegment[index]
-    print("Ratio of mapped pixels = %.3f" % (numMappedPixels / numPixels), file=sys.stderr)
+if True:
+    for pixel in persisting:
+        if pixel in pixelToSegment:
+            si                         = pixelToSegment[pixel]
+            mappedPixelsPerSegment[si] = mappedPixelsPerSegment.get(si,0) + 1
+
+    for index in sorted(mappedPixelsPerSegment.keys()):
+        numPixels       = len(segments[index])
+        numMappedPixels = mappedPixelsPerSegment[index]
+        ratio           = numMappedPixels / numPixels
+
+        ratios.append(ratio)
+
+        print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
+
+#for pixel in aHaveMatch:
+#    if pixel in pixelToSegment:
+#        si                            = pixelToSegment[pixel]
+#        mappedPixelsPerSegmentNew[si] = mappedPixelsPerSegmentNew.get(si,0) + 1
+
+#ratios = list()
+#
+#for index in sorted(mappedPixelsPerSegmentNew.keys()):
+#    numPixels       = len(segments[index])
+#    numMappedPixels = mappedPixelsPerSegmentNew[index]
+#    ratio           = numMappedPixels / numPixels
+#
+#    ratios.append( ratio )
+#    print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
+
+for ratio in sorted(ratios):
+    print(ratio)
+
+print("Mean ratio   = %.3f" % statistics.mean(ratios))
+print("Median ratio = %.3f" % statistics.median(ratios))

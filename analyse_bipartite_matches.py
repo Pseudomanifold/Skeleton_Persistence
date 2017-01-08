@@ -21,9 +21,18 @@ import sys
 
 import skeleton_to_segments as skel
 
-# Prefix for reading the skeleton file that corresponds to a given set
-# of matches.
-skeletonPrefix = "viscfing_1-"
+""" Returns path to skeleton of a certain time step """
+def makeSkeletonPath(filename, t):
+    # Prefix for reading the skeleton file that corresponds to a given set
+    # of matches.
+    skeletonPrefix = "viscfing_1-"
+
+    skeletonPath =   os.path.abspath(filename+"/../../") + "/"\
+                   + skeletonPrefix                           \
+                   + ("%02d" % t)                             \
+                   + ".txt"
+
+    return skeletonPath
 
 """ Calculates the Euclidean distance between two pixels """
 def distance( a,b,c,d ):
@@ -163,11 +172,7 @@ printPixels(destroyed)
 # segments
 #
 
-skeletonPath =   os.path.abspath(filename+"/../../") + "/"\
-               + skeletonPrefix                           \
-               + ("%02d" % t)                             \
-               + ".txt"
-
+skeletonPath           = makeSkeletonPath(filename, t)
 segments               = skel.getSegments(skeletonPath)
 pixelToSegment         = dict()
 mappedPixelsPerSegment = dict()

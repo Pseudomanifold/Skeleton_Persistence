@@ -115,214 +115,219 @@ def propagateCreationTimeInformation():
 
     return creationTime
 
-with open(filename) as f:
+for filename in sys.argv[1:]:
+    with open(filename) as f:
 
-    # Note that matches for t=55 correspond to finding a matching
-    # between time steps t=54 and t=55. Hence the subtraction.
-    t = int( re.match(r'.*_(\d\d)_.*', filename ).group(1) )
-    t = t-1
+        # Skip all files that do not contain directed matching information.
+        # This makes it easier for me to process a whole directory.
+        if "directed" not in filename:
+            continue
 
-    for line in f:
-        (a,b,direction,c,d) = line.split() 
-        (a,b,c,d)           = ( int(a), int(b), int(c), int(d) )
+        # Note that matches for t=55 correspond to finding a matching
+        # between time steps t=54 and t=55. Hence the subtraction.
+        t = int( re.match(r'.*_(\d\d)_.*', filename ).group(1) )
+        t = t-1
 
-        # Pixel (c,d) has at least one match, induced by the current time step,
-        # hence there is some structure that persists until that time step.
-        if direction == "->":
-            bHaveMatch.add( (c,d) )
+        for line in f:
+            (a,b,direction,c,d) = line.split() 
+            (a,b,c,d)           = ( int(a), int(b), int(c), int(d) )
 
-        # Pixel (a,b) has at least one match, induced by the subsequent time
-        # step, hence there is some structure that persists until that time
-        # step.
-        elif direction == "<-":
-            aHaveMatch.add( (a,b) )
+            # Pixel (c,d) has at least one match, induced by the current time step,
+            # hence there is some structure that persists until that time step.
+            if direction == "->":
+                bHaveMatch.add( (c,d) )
 
-        if (c,d) not in aMatches[ (a,b) ]:
-            aMatches[ (a,b) ].append( (c,d) )
+            # Pixel (a,b) has at least one match, induced by the subsequent time
+            # step, hence there is some structure that persists until that time
+            # step.
+            elif direction == "<-":
+                aHaveMatch.add( (a,b) )
 
-        if (a,b) not in bMatches[ (c,d) ]:
-            bMatches[ (c,d) ].append( (a,b) )
+            if (c,d) not in aMatches[ (a,b) ]:
+                aMatches[ (a,b) ].append( (c,d) )
 
-        allEdges.add( (a,b,c,d) )
+            if (a,b) not in bMatches[ (c,d) ]:
+                bMatches[ (c,d) ].append( (a,b) )
 
-numMatches = len(allEdges)
+            allEdges.add( (a,b,c,d) )
 
-#
-# Find one-to-one matches. As this task is symmetrical by nature, it
-# suffices to traverse one of the dictionaries.
-#
+    numMatches = len(allEdges)
 
-numOneToOneMatches = 0
+    #
+    # Find one-to-one matches. As this task is symmetrical by nature, it
+    # suffices to traverse one of the dictionaries.
+    #
+    numOneToOneMatches = 0
 
-for (a,b) in sorted( aMatches.keys() ):
-    aPartners = aMatches[ (a,b) ]
-    if len(aPartners) == 1:
-        (c,d)     = aPartners[0]
-        bPartners = bMatches[ (c,d) ]
+    for (a,b) in sorted( aMatches.keys() ):
+        aPartners = aMatches[ (a,b) ]
+        if len(aPartners) == 1:
+            (c,d)     = aPartners[0]
+            bPartners = bMatches[ (c,d) ]
 
-        if len(bPartners) == 1:
-            numOneToOneMatches += 1
-            oneToOneEdges.add( (a,b,c,d) )
+            if len(bPartners) == 1:
+                numOneToOneMatches += 1
+                oneToOneEdges.add( (a,b,c,d) )
 
-            persisting.add( (a,b) )
+                persisting.add( (a,b) )
 
-print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches), file=sys.stderr)
+    print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches), file=sys.stderr)
 
-#
-# Find one-to-many matches
-#
+    #
+    # Find one-to-many matches
+    #
 
-numOneToManyMatches = 0
+    numOneToManyMatches = 0
 
-for (a,b) in sorted( aMatches.keys() ):
-    matches = aMatches[ (a,b) ]
-    if len(matches) > 1:
-        singleMatch = True
-        for (c,d) in matches:
-            if len( bMatches[ (c,d) ] ) != 1:
-                singleMatch = False
-                break
-        if singleMatch:
-            numOneToManyMatches += len(matches)
-
+    for (a,b) in sorted( aMatches.keys() ):
+        matches = aMatches[ (a,b) ]
+        if len(matches) > 1:
+            singleMatch = True
             for (c,d) in matches:
-                oneToManyEdges.add( (a,b,c,d) )
+                if len( bMatches[ (c,d) ] ) != 1:
+                    singleMatch = False
+                    break
+            if singleMatch:
+                numOneToManyMatches += len(matches)
 
-            created.add( (a,b) )
+                for (c,d) in matches:
+                    oneToManyEdges.add( (a,b,c,d) )
 
-print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToManyMatches / numMatches), file=sys.stderr)
+                created.add( (a,b) )
 
-#
-# Find many-to-one matches
-#
+    print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToManyMatches / numMatches), file=sys.stderr)
 
-numManyToOneMatches = 0
+    #
+    # Find many-to-one matches
+    #
 
-for (c,d) in sorted( bMatches.keys() ):
-    matches = bMatches[ (c,d) ]
-    if len(matches) > 1:
-        singleMatch = True
-        for (a,b) in matches:
-            if len( aMatches[ (a,b) ] ) != 1:
-                singleMatch = False
-                break
-        if singleMatch:
-            numManyToOneMatches += len(matches)
+    numManyToOneMatches = 0
 
+    for (c,d) in sorted( bMatches.keys() ):
+        matches = bMatches[ (c,d) ]
+        if len(matches) > 1:
+            singleMatch = True
             for (a,b) in matches:
-                manyToOneEdges.add( (a,b,c,d) )
-                destroyed.add( (a,b) )
+                if len( aMatches[ (a,b) ] ) != 1:
+                    singleMatch = False
+                    break
+            if singleMatch:
+                numManyToOneMatches += len(matches)
 
-print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, numManyToOneMatches / numMatches), file=sys.stderr)
+                for (a,b) in matches:
+                    manyToOneEdges.add( (a,b,c,d) )
+                    destroyed.add( (a,b) )
 
-#
-# Irregular edges
-#
+    print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, numManyToOneMatches / numMatches), file=sys.stderr)
 
-irregularEdges = allEdges - oneToOneEdges - oneToManyEdges - manyToOneEdges
+    #
+    # Irregular edges
+    #
 
-print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(irregularEdges) / numMatches), file=sys.stderr)
+    irregularEdges = allEdges - oneToOneEdges - oneToManyEdges - manyToOneEdges
 
-#
-# Print "classified" pixels
-#
+    print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(irregularEdges) / numMatches), file=sys.stderr)
 
-if printClassifiedPixels:
-    printPixels(persisting)
-    printPixels(created)
-    printPixels(destroyed)
+    #
+    # Print "classified" pixels
+    #
 
-#
-# Load the skeleton of the current time step and of the previous time step. Use
-# this to determine structures that have been created (unmatched pixels in the
-# forward matching) or destroyed (unmatched pixels in the backward matching).
-#
+    if printClassifiedPixels:
+        printPixels(persisting)
+        printPixels(created)
+        printPixels(destroyed)
 
-aSkeletonPath = makeSkeletonPath(filename,t  )
-bSkeletonPath = makeSkeletonPath(filename,t+1)
+    #
+    # Load the skeleton of the current time step and of the previous time step. Use
+    # this to determine structures that have been created (unmatched pixels in the
+    # forward matching) or destroyed (unmatched pixels in the backward matching).
+    #
 
-#
-# Propagate creation time information to the pixels and, subsequently,
-# to the segments. Afterwards, let's check whether there are segments
-# for which an age can be determined.
-#
+    aSkeletonPath = makeSkeletonPath(filename,t  )
+    bSkeletonPath = makeSkeletonPath(filename,t+1)
 
-creationTimes = propagateCreationTimeInformation()
-segments      = skel.getSegments(bSkeletonPath)
+    #
+    # Propagate creation time information to the pixels and, subsequently,
+    # to the segments. Afterwards, let's check whether there are segments
+    # for which an age can be determined.
+    #
 
-# Stores age information about each segment
-ages          = collections.defaultdict(list)
+    creationTimes = propagateCreationTimeInformation()
+    segments      = skel.getSegments(bSkeletonPath)
 
-for index,segment in enumerate(segments):
-    for pixel in segment:
-        ages[index].append( creationTimes[pixel] )
-
-numNewSegments = 0
-
-for index in sorted( ages.keys() ):
-    for (x,y) in segments[index]:
-        print("%d\t%d\t%d" % (x,y, min(ages[index])))
-
-# Unmatched pixels in the current time step (a) and in the subsequent time step
-# (b). Information about these matches is being used to figure out whether a
-# certain segment has _most likely_ been created or destroyed in a certain time
-# step.
-aUnmatched, aPixels = findUnmatchedPixelsInSkeleton(aHaveMatch, aSkeletonPath)
-bUnmatched, bPixels = findUnmatchedPixelsInSkeleton(bHaveMatch, bSkeletonPath)
-
-print("There are %d/%d unmatched pixels in the current time step" % (len(aUnmatched), aPixels))
-print("There are %d/%d unmatched pixels in the subsequent time step" % (len(bUnmatched), bPixels))
-
-#
-# Load the corresponding skeleton and extend the information to its
-# segments
-#
-
-if False:
-    skeletonPath              = makeSkeletonPath(filename, t)
-    segments                  = skel.getSegments(skeletonPath)
-    pixelToSegment            = dict()
-    mappedPixelsPerSegment    = dict()
-    mappedPixelsPerSegmentNew = dict()
+    # Stores age information about each segment
+    ages          = collections.defaultdict(list)
 
     for index,segment in enumerate(segments):
         for pixel in segment:
-            pixelToSegment[pixel] = index
+            ages[index].append( creationTimes[pixel] )
 
-    ratios = list()
+    numNewSegments = 0
 
-    if True:
-        for pixel in persisting:
-            if pixel in pixelToSegment:
-                si                         = pixelToSegment[pixel]
-                mappedPixelsPerSegment[si] = mappedPixelsPerSegment.get(si,0) + 1
+    for index in sorted( ages.keys() ):
+        for (x,y) in segments[index]:
+            print("%d\t%d\t%d" % (x,y, min(ages[index])))
 
-        for index in sorted(mappedPixelsPerSegment.keys()):
-            numPixels       = len(segments[index])
-            numMappedPixels = mappedPixelsPerSegment[index]
-            ratio           = numMappedPixels / numPixels
+    # Unmatched pixels in the current time step (a) and in the subsequent time step
+    # (b). Information about these matches is being used to figure out whether a
+    # certain segment has _most likely_ been created or destroyed in a certain time
+    # step.
+    aUnmatched, aPixels = findUnmatchedPixelsInSkeleton(aHaveMatch, aSkeletonPath)
+    bUnmatched, bPixels = findUnmatchedPixelsInSkeleton(bHaveMatch, bSkeletonPath)
 
-            ratios.append(ratio)
+    print("There are %d/%d unmatched pixels in the current time step" % (len(aUnmatched), aPixels))
+    print("There are %d/%d unmatched pixels in the subsequent time step" % (len(bUnmatched), bPixels))
 
-            print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
+    #
+    # Load the corresponding skeleton and extend the information to its
+    # segments
+    #
 
-#for pixel in aHaveMatch:
-#    if pixel in pixelToSegment:
-#        si                            = pixelToSegment[pixel]
-#        mappedPixelsPerSegmentNew[si] = mappedPixelsPerSegmentNew.get(si,0) + 1
+    if False:
+        skeletonPath              = makeSkeletonPath(filename, t)
+        segments                  = skel.getSegments(skeletonPath)
+        pixelToSegment            = dict()
+        mappedPixelsPerSegment    = dict()
+        mappedPixelsPerSegmentNew = dict()
 
-#ratios = list()
-#
-#for index in sorted(mappedPixelsPerSegmentNew.keys()):
-#    numPixels       = len(segments[index])
-#    numMappedPixels = mappedPixelsPerSegmentNew[index]
-#    ratio           = numMappedPixels / numPixels
-#
-#    ratios.append( ratio )
-#    print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
+        for index,segment in enumerate(segments):
+            for pixel in segment:
+                pixelToSegment[pixel] = index
 
-    for ratio in sorted(ratios):
-        print(ratio)
+        ratios = list()
 
-    print("Mean ratio   = %.3f" % statistics.mean(ratios))
-    print("Median ratio = %.3f" % statistics.median(ratios))
+        if True:
+            for pixel in persisting:
+                if pixel in pixelToSegment:
+                    si                         = pixelToSegment[pixel]
+                    mappedPixelsPerSegment[si] = mappedPixelsPerSegment.get(si,0) + 1
+
+            for index in sorted(mappedPixelsPerSegment.keys()):
+                numPixels       = len(segments[index])
+                numMappedPixels = mappedPixelsPerSegment[index]
+                ratio           = numMappedPixels / numPixels
+
+                ratios.append(ratio)
+
+                print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
+
+        #for pixel in aHaveMatch:
+        #    if pixel in pixelToSegment:
+        #        si                            = pixelToSegment[pixel]
+        #        mappedPixelsPerSegmentNew[si] = mappedPixelsPerSegmentNew.get(si,0) + 1
+        
+        #ratios = list()
+        #
+        #for index in sorted(mappedPixelsPerSegmentNew.keys()):
+        #    numPixels       = len(segments[index])
+        #    numMappedPixels = mappedPixelsPerSegmentNew[index]
+        #    ratio           = numMappedPixels / numPixels
+        #
+        #    ratios.append( ratio )
+        #    print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
+
+        for ratio in sorted(ratios):
+            print(ratio)
+
+        print("Mean ratio   = %.3f" % statistics.mean(ratios))
+        print("Median ratio = %.3f" % statistics.median(ratios))

@@ -27,4 +27,9 @@ for t in sorted( steps.keys() ):
             with open(filename) as g:
                 for line in g:
                     (a,b,c,d) = [ int(x) for x in line.split() ]
-                    print("%d\t%d%s%d\t%d" % (a,b, direction, c,d), file=f)
+                    if direction == "->":
+                        print("%d\t%d%s%d\t%d" % (a,b, direction, c,d), file=f)
+                    # Backward edges have been flipped
+                    else:
+                        print("%d\t%d%s%d\t%d" % (c,d, direction, a,b), file=f)
+

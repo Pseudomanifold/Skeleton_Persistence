@@ -61,12 +61,6 @@ def findUnmatchedPixelsInSkeleton(matches, filename):
 
     return unmatched, n
 
-"""
-First creation time assignment strategy: Assigns pixels from the one-to-one
-matching the same birthday and keeps all other creation dates at the current
-time step.
-"""
-
 # Stores matches for the current time step (a) and the subsequent time
 # step (b). The key is a pixel tuple here, while the value stores all
 # the corresponding matches.
@@ -96,6 +90,30 @@ filename = sys.argv[1]
 t        = 0
 
 printClassifiedPixels = False
+
+"""
+Propagates creation time information to the pixels of the next time
+step. This is central for calculating 'skeleton persistence'.
+"""
+def propagateCreationTimeInformation():
+    # This dictionary stores the creation time of a pixel in the
+    # subsequent time step.
+    #
+    # The creation time is either coming from a pixel in the previous
+    # time step or it is set to the current time step.
+    creationTime = dict()
+
+    #
+    # Simple strategy: Only assign creation times in unambiguous cases,
+    # i.e., when we have a matching between exactly two pixels.
+    #
+    for (a,b,c,d) in allEdges:
+        if (a,b,c,d) in oneToOneEdges:
+            creationTime[ (c,d) ] = t # TODO: Take time from previous time step
+        else:
+            creationTime[ (c,d) ] = t+1
+
+    return creationTime
 
 with open(filename) as f:
 
@@ -222,6 +240,28 @@ if printClassifiedPixels:
 
 aSkeletonPath = makeSkeletonPath(filename,t  )
 bSkeletonPath = makeSkeletonPath(filename,t+1)
+
+#
+# Propagate creation time information to the pixels and, subsequently,
+# to the segments. Afterwards, let's check whether there are segments
+# for which an age can be determined.
+#
+
+creationTimes = propagateCreationTimeInformation()
+segments      = skel.getSegments(bSkeletonPath)
+
+# Stores age information about each segment
+ages          = collections.defaultdict(list)
+
+for index,segment in enumerate(segments):
+    for pixel in segment:
+        ages[index].append( creationTimes[pixel] )
+
+numNewSegments = 0
+
+for index in sorted( ages.keys() ):
+    for (x,y) in segments[index]:
+        print("%d\t%d\t%d" % (x,y, min(ages[index])))
 
 # Unmatched pixels in the current time step (a) and in the subsequent time step
 # (b). Information about these matches is being used to figure out whether a

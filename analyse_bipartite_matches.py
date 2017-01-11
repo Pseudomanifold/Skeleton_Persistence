@@ -119,8 +119,11 @@ with open(filename) as f:
         elif direction == "<-":
             aHaveMatch.add( (a,b) )
 
-        aMatches[ (a,b) ].append( (c,d) )
-        bMatches[ (c,d) ].append( (a,b) )
+        if (c,d) not in aMatches[ (a,b) ]:
+            aMatches[ (a,b) ].append( (c,d) )
+
+        if (a,b) not in bMatches[ (c,d) ]:
+            bMatches[ (c,d) ].append( (a,b) )
 
         allEdges.add( (a,b,c,d) )
 

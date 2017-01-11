@@ -68,6 +68,10 @@ def propagateCreationTimeInformation():
         (a,b)                 = forwardMatches[ (c,d) ][0]
         creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
 
+    for (c,d) in growth:
+        (a,b)                 = forwardMatches[ (c,d) ][0]
+        creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
+
     for l in backwardMatches.values():
         for (c,d) in l:
             if (c,d) not in creationTime:
@@ -111,8 +115,7 @@ for filename in sys.argv[1:]:
     # suffices to traverse one of the dictionaries.
     #
     numOneToOneMatches = 0
-
-    persisting = set()
+    persisting         = set()
 
     for (a,b) in sorted( backwardMatches.keys() ):
         partners = backwardMatches[ (a,b) ]
@@ -127,6 +130,29 @@ for filename in sys.argv[1:]:
     numMatches = 10000
 
     print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches), file=sys.stderr)
+
+    #
+    # Find one-to-many matches
+    #
+    numOneToManyMatches = 0
+    growth              = set()
+
+    for (a,b) in sorted( backwardMatches.keys() ):
+        partners = backwardMatches[ (a,b) ]
+        isSingle = True
+        for partner in partners:
+            if partner in forwardMatches:
+                neighbours = forwardMatches[partner]
+                if len(neighbours) == 1:
+                    if neighbours[0] != (a,b):
+                        isSingle = False
+
+        if isSingle:
+            numOneToManyMatches += 1
+            for (c,d) in partners:
+                growth.add( (c,d) )
+
+    print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToOneMatches / numMatches), file=sys.stderr)
 
     creationTime         = propagateCreationTimeInformation()
     previousCreationTime = creationTime

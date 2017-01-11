@@ -95,6 +95,8 @@ persisting = set()
 filename = sys.argv[1]
 t        = 0
 
+printClassifiedPixels = False
+
 with open(filename) as f:
 
     # Note that matches for t=55 correspond to finding a matching
@@ -204,9 +206,10 @@ print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(
 # Print "classified" pixels
 #
 
-printPixels(persisting)
-printPixels(created)
-printPixels(destroyed)
+if printClassifiedPixels:
+    printPixels(persisting)
+    printPixels(created)
+    printPixels(destroyed)
 
 #
 # Load the skeleton of the current time step and of the previous time step. Use

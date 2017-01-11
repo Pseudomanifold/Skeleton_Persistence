@@ -61,6 +61,12 @@ def findUnmatchedPixelsInSkeleton(matches, filename):
 
     return unmatched, n
 
+"""
+First creation time assignment strategy: Assigns pixels from the one-to-one
+matching the same birthday and keeps all other creation dates at the current
+time step.
+"""
+
 # Stores matches for the current time step (a) and the subsequent time
 # step (b). The key is a pixel tuple here, while the value stores all
 # the corresponding matches.
@@ -220,7 +226,6 @@ bUnmatched, bPixels = findUnmatchedPixelsInSkeleton(bHaveMatch, bSkeletonPath)
 
 print("There are %d/%d unmatched pixels in the current time step" % (len(aUnmatched), aPixels))
 print("There are %d/%d unmatched pixels in the subsequent time step" % (len(bUnmatched), bPixels))
-
 
 #
 # Load the corresponding skeleton and extend the information to its

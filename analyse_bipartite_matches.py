@@ -272,8 +272,6 @@ for filename in sys.argv[1:]:
         for pixel in segment:
             ages[index].append( creationTime[pixel] )
 
-    numNewSegments = 0
-
     for index in sorted( ages.keys() ):
         for (x,y) in segments[index]:
             print("%d\t%d\t%d" % (x,y, min(ages[index])))

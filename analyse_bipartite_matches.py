@@ -136,6 +136,8 @@ for filename in sys.argv[1:]:
         t = int( re.match(r'.*_(\d\d)_.*', filename ).group(1) )
         t = t-1
 
+        print("Processing %s..." % filename, file=sys.stderr)
+
         for line in f:
             (a,b,direction,c,d) = line.split() 
             (a,b,c,d)           = ( int(a), int(b), int(c), int(d) )
@@ -279,3 +281,11 @@ for filename in sys.argv[1:]:
     print("\n\n")
 
     previousCreationTime = creationTime
+
+    # Cleanup for the next time step. This could possibly be solved more
+    # elegantly, I guess.
+    allEdges       = set()
+    oneToOneEdges  = set()
+    oneToManyEdges = set()
+    manyToOneEdges = set()
+

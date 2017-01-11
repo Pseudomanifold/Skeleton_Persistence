@@ -80,6 +80,11 @@ oneToOneEdges  = set()
 oneToManyEdges = set()
 manyToOneEdges = set()
 
+# Stores all creation times of pixels in the previous time step. This is
+# necessary in order to correctly propagate time information throughout
+# the growth process.
+previousCreationTime = dict()
+
 # Partitions pixels in the current time step according to how they can
 # be assigned to pixels in the subsequent time step.
 created    = set()
@@ -89,6 +94,8 @@ persisting = set()
 filename = sys.argv[1]
 t        = 0
 
+# FIXME: Debug flag for printing pixel classifications. Not sure whether
+# I need this any more.
 printClassifiedPixels = False
 
 """
@@ -109,12 +116,13 @@ def propagateCreationTimeInformation():
     #
     for (a,b,c,d) in allEdges:
         if (a,b,c,d) in oneToOneEdges:
-            creationTime[ (c,d) ] = t # TODO: Take time from previous time step
+            creationTime[ (c,d) ] = t if t == 1 else previousCreationTime[ (a,b) ]
         else:
             creationTime[ (c,d) ] = t+1
 
     return creationTime
 
+""" main """
 for filename in sys.argv[1:]:
     with open(filename) as f:
 
@@ -252,18 +260,22 @@ for filename in sys.argv[1:]:
     # for which an age can be determined.
     #
 
-    creationTimes = propagateCreationTimeInformation()
-    segments      = skel.getSegments(bSkeletonPath)
+    creationTime = propagateCreationTimeInformation()
+    segments     = skel.getSegments(bSkeletonPath)
 
     # Stores age information about each segment
     ages          = collections.defaultdict(list)
 
     for index,segment in enumerate(segments):
         for pixel in segment:
-            ages[index].append( creationTimes[pixel] )
+            ages[index].append( creationTime[pixel] )
 
     numNewSegments = 0
 
     for index in sorted( ages.keys() ):
         for (x,y) in segments[index]:
             print("%d\t%d\t%d" % (x,y, min(ages[index])))
+
+    print("\n\n")
+
+    previousCreationTime = creationTime

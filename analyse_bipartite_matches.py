@@ -110,13 +110,17 @@ def propagateCreationTimeInformation():
     # time step or it is set to the current time step.
     creationTime = dict()
 
-    #
-    # Simple strategy: Only assign creation times in unambiguous cases,
-    # i.e., when we have a matching between exactly two pixels.
-    #
     for (a,b,c,d) in allEdges:
+        # Unambiguous case: There is an exact match between two pixels,
+        # so we just the previous creation time again.
         if (a,b,c,d) in oneToOneEdges:
-            creationTime[ (c,d) ] = t if t == 1 else previousCreationTime[ (a,b) ]
+            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
+        # One-to-many matching: One pixel with a known creation time has
+        # been matched to multiple pixels with unknown creation times.
+        #
+        # FIXME: Not sure whether this is correct.
+        elif (a,b,c,d) in oneToManyEdges:
+            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
         else:
             creationTime[ (c,d) ] = t+1
 

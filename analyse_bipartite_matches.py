@@ -232,32 +232,33 @@ print("There are %d/%d unmatched pixels in the subsequent time step" % (len(bUnm
 # segments
 #
 
-skeletonPath              = makeSkeletonPath(filename, t)
-segments                  = skel.getSegments(skeletonPath)
-pixelToSegment            = dict()
-mappedPixelsPerSegment    = dict()
-mappedPixelsPerSegmentNew = dict()
+if False:
+    skeletonPath              = makeSkeletonPath(filename, t)
+    segments                  = skel.getSegments(skeletonPath)
+    pixelToSegment            = dict()
+    mappedPixelsPerSegment    = dict()
+    mappedPixelsPerSegmentNew = dict()
 
-for index,segment in enumerate(segments):
-    for pixel in segment:
-        pixelToSegment[pixel] = index
+    for index,segment in enumerate(segments):
+        for pixel in segment:
+            pixelToSegment[pixel] = index
 
-ratios = list()
+    ratios = list()
 
-if True:
-    for pixel in persisting:
-        if pixel in pixelToSegment:
-            si                         = pixelToSegment[pixel]
-            mappedPixelsPerSegment[si] = mappedPixelsPerSegment.get(si,0) + 1
+    if True:
+        for pixel in persisting:
+            if pixel in pixelToSegment:
+                si                         = pixelToSegment[pixel]
+                mappedPixelsPerSegment[si] = mappedPixelsPerSegment.get(si,0) + 1
 
-    for index in sorted(mappedPixelsPerSegment.keys()):
-        numPixels       = len(segments[index])
-        numMappedPixels = mappedPixelsPerSegment[index]
-        ratio           = numMappedPixels / numPixels
+        for index in sorted(mappedPixelsPerSegment.keys()):
+            numPixels       = len(segments[index])
+            numMappedPixels = mappedPixelsPerSegment[index]
+            ratio           = numMappedPixels / numPixels
 
-        ratios.append(ratio)
+            ratios.append(ratio)
 
-        print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
+            print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
 
 #for pixel in aHaveMatch:
 #    if pixel in pixelToSegment:
@@ -274,8 +275,8 @@ if True:
 #    ratios.append( ratio )
 #    print("Ratio of mapped pixels = %.3f" % ratio, file=sys.stderr)
 
-for ratio in sorted(ratios):
-    print(ratio)
+    for ratio in sorted(ratios):
+        print(ratio)
 
-print("Mean ratio   = %.3f" % statistics.mean(ratios))
-print("Median ratio = %.3f" % statistics.median(ratios))
+    print("Mean ratio   = %.3f" % statistics.mean(ratios))
+    print("Median ratio = %.3f" % statistics.median(ratios))

@@ -120,7 +120,16 @@ def propagateCreationTimeInformation():
         #
         # FIXME: Not sure whether this is correct.
         elif (a,b,c,d) in oneToManyEdges:
-            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
+            # Bailing out for now and treating the pixel as a new pixel. This
+            # is probably the right way here.
+            creationTime[ (c,d) ] = t+1
+
+        # Many-to-one matching: A pixel in the subsequent time step has many
+        # progenitors in the current time step. Here we have a choice between
+        # choosing some creation time from the set of all creation times.
+        elif (a,b,c,d) in manyToOneEdges:
+            creationTimes         = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
+            creationTime[ (c,d) ] = min(creationTimes)
         else:
             creationTime[ (c,d) ] = t+1
 
@@ -291,3 +300,5 @@ for filename in sys.argv[1:]:
     oneToManyEdges = set()
     manyToOneEdges = set()
 
+    aMatches.clear()
+    bMatches.clear()

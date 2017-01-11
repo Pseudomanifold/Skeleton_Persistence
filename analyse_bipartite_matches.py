@@ -130,6 +130,18 @@ def propagateCreationTimeInformation():
         elif (a,b,c,d) in manyToOneEdges:
             creationTimes         = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
             creationTime[ (c,d) ] = min(creationTimes)
+
+        # Irregular edges: No clear assignment possible to one time step. Here,
+        # a majority vote of all possible creation times makes sense.
+        elif (a,b,c,d) in irregularEdges:
+            # FIXME: Does it make sense to go further here by jumping into the
+            # first set, collect all matches in the second set, collect their
+            # matches, and so on, until the process converges?
+            if t == 1:
+                creationTimes = [ 1 ] * len( bMatches[ (c,d) ] )
+            else:
+                creationTimes = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
+            creationTime[ (c,d) ] = max( creationTimes )
         else:
             creationTime[ (c,d) ] = t+1
 

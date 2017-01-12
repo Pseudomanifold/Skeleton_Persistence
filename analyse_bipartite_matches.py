@@ -141,6 +141,7 @@ def propagateCreationTimeInformation():
 
             partner               = partners[0]
             creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ partner ]
+
         # For decay pixels, there are multiple partners in the current
         # time step, so we use the oldest one.
         elif (c,d) in decay:
@@ -308,6 +309,57 @@ for filename in sys.argv[1:]:
                              - len(growth)     \
                              - len(decay)
 
+    #
+    # Print "classified" pixels
+    #
+
+    outputClassification = "/tmp/t%02d_classification.txt" % (t+1)
+
+    with open(outputClassification, "w") as g:
+        printPixels("Persisting", persisting, g)
+        printPixels("Decay"     , decay     , g)
+        printPixels("Growth"    , growth    , g)
+        printPixels("Irregular" , irregular , g)
+
+    # Propagate creation time information to the pixels and, subsequently,
+    # to the segments. Afterwards, let's check whether there are segments
+    # for which an age can be determined.
+    creationTime = propagateCreationTimeInformation()
+
+    #
+    # Load the skeleton of the subsequent time step. Decompose it into
+    # segments and calculate an age based on pixels along a one segment. 
+    #
+
+    skeletonPath = makeSkeletonPath(filename,t+1)
+    segments     = skel.getSegments(skeletonPath)
+    ages         = collections.defaultdict(list)
+
+    for index,segment in enumerate(segments):
+        for pixel in segment:
+            ages[index].append( creationTime[pixel] )
+
+    outputSegmentAges = "/tmp/t%02d_segment_ages.txt" % (t+1)
+
+    with open(outputSegmentAges, "w") as g:
+        for index,segment in enumerate(segments):
+            for (x,y) in segment:
+                a = min(ages[index])
+                print("%d\t%d\t%d" % (x,y,a), file=g)
+
+    outputAges = "/tmp/t%02d_ages.txt" % (t+1)
+
+    with open(outputAges, "w") as g:
+        for (x,y) in creationTime:
+            print("%d\t%d\t%d" % (x,y, creationTime[ (x,y) ]), file=g)
+
+    previousCreationTime = creationTime
+    continue
+
+    #
+    # Calculate ages based on connected components
+    #
+
     verticesT0 = [ (a,b,False) for (a,b) in pixelsT0 ]
     verticesT1 = [ (c,d,True ) for (c,d) in pixelsT1 ]
 
@@ -330,64 +382,23 @@ for filename in sys.argv[1:]:
         components[root] = UF.vertices(root)
 
     for root in components:
-        pixels = [ (x,y) for (x,y,D) in components[root] if D == True ]
+        t1    = [ (x,y) for (x,y,D) in components[root] if D == True  ]
+        t0    = [ (x,y) for (x,y,D) in components[root] if D == False ]
 
-        isPersisting = True
-        isGrowth     = True
-        isDecay      = True
-        isIrregular  = True
+        times = list()
 
-        for pixel in pixels:
-            isPersisting = isPersisting and pixel in persisting
-            isGrowth     = isGrowth     and pixel in growth
-            isDecay      = isDecay      and pixel in decay
-            isIrregular  = isIrregular  and pixel in irregular
+        if t == 1:
+            times = [2]
+        else:
+            times = [ previousCreationTime[ (a,b) ] for (a,b) in t0 ]
+            print(times)
 
-        assert not( isPersisting and isGrowth and isDecay and isIrregular )
-        assert    ( isPersisting or  isGrowth or  isDecay or  isIrregular )
+        for (c,d) in t1:
+            if (c,d) in irregular:
+                creationTime[ (c,d) ] = min(times)
 
-    #
-    # Print "classified" pixels
-    #
+    outputNewAges = "/tmp/t%02d_new_ages.txt" % (t+1)
 
-    outputClassification = "/tmp/t%02d_classification.txt" % (t+1)
-
-    with open(outputClassification, "w") as g:
-        printPixels("Persisting", persisting, g)
-        printPixels("Decay"     , decay     , g)
-        printPixels("Growth"    , growth    , g)
-        printPixels("Irregular" , irregular , g)
-
-    #
-    # Load the skeleton of the current time step and of the previous time step. Use
-    # this to determine structures that have been created (unmatched pixels in the
-    # forward matching) or destroyed (unmatched pixels in the backward matching).
-    #
-
-    aSkeletonPath = makeSkeletonPath(filename,t  )
-    bSkeletonPath = makeSkeletonPath(filename,t+1)
-
-    #
-    # Propagate creation time information to the pixels and, subsequently,
-    # to the segments. Afterwards, let's check whether there are segments
-    # for which an age can be determined.
-    #
-
-    creationTime = propagateCreationTimeInformation()
-
-    # Stores age information about each segment
-    if False:
-        ages          = collections.defaultdict(list)
-        segments      = skel.getSegments(bSkeletonPath)
-
-        for index,segment in enumerate(segments):
-            for pixel in segment:
-                ages[index].append( creationTime.get( pixel, t+1) )
-
-    outputAges = "/tmp/t%02d_ages.txt" % (t+1)
-
-    with open(outputAges, "w") as g:
+    with open(outputNewAges, "w") as g:
         for (x,y) in creationTime:
             print("%d\t%d\t%d" % (x,y, creationTime[ (x,y) ]), file=g)
-
-    previousCreationTime = creationTime

@@ -41,7 +41,7 @@ def distance( a,b,c,d ):
 
 """ Prints a set of pixels """
 def printPixels(name, pixels, f):
-    print("# %s" % name)
+    print("# %s" % name, file=f)
     if pixels:
         for (a,b) in pixels:
             print("%d\t%d" % (a,b), file=f)
@@ -326,23 +326,20 @@ for filename in sys.argv[1:]:
     #
 
     creationTime = propagateCreationTimeInformation()
-    segments     = skel.getSegments(bSkeletonPath)
 
     # Stores age information about each segment
-    ages          = collections.defaultdict(list)
+    if False:
+        ages          = collections.defaultdict(list)
+        segments      = skel.getSegments(bSkeletonPath)
 
-    for index,segment in enumerate(segments):
-        for pixel in segment:
-            ages[index].append( creationTime.get( pixel, t+1) )
+        for index,segment in enumerate(segments):
+            for pixel in segment:
+                ages[index].append( creationTime.get( pixel, t+1) )
 
     outputAges = "/tmp/t%02d_ages.txt" % (t+1)
 
     with open(outputAges, "w") as g:
-        for index in sorted( ages.keys() ):
-            j = 0
-            for (x,y) in segments[index]:
-                print("%d\t%d\t%d" % (x,y, ages[index][j]), file=g)
-                j += 1
-        print("\n\n", file=g)
+        for (x,y) in creationTime:
+            print("%d\t%d\t%d" % (x,y, creationTime[ (x,y) ]), file=g)
 
     previousCreationTime = creationTime

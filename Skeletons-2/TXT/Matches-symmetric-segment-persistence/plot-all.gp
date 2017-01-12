@@ -1,4 +1,7 @@
 do for [t = 2:84] {
+
+  load "~/Local/gnuplot-colorbrewer/sequential/Greys.plt"
+
   in  = sprintf('t%02d_segment_persistence.txt', t)
   out = sprintf('t%02d_segment_persistence.svg', t)
 
@@ -13,6 +16,6 @@ do for [t = 2:84] {
 
   set pointsize 1.0
 
-  plot in with points pt 7 lc rgb 'black', x with l lc rgb 'black'
+  plot in with points palette pt 7 lc rgb black, x with l lc rgb 'black'
 }
 

@@ -292,12 +292,12 @@ for filename in sys.argv[1:]:
 
     print("Many-to-one matches: %d/%d (%.3f)" % (len(decay), len(pixelsT1), len(decay) / len(pixelsT1) ), file=sys.stderr)
 
-    irregularPixels = pixelsT1 - persisting - growth - decay
+    irregular = pixelsT1 - persisting - growth - decay
 
-    assert len(irregularPixels) ==   len(pixelsT1)   \
-                                   - len(persisting) \
-                                   - len(growth)     \
-                                   - len(decay)
+    assert len(irregular) ==   len(pixelsT1)   \
+                             - len(persisting) \
+                             - len(growth)     \
+                             - len(decay)
 
     #
     # Print "classified" pixels
@@ -309,6 +309,7 @@ for filename in sys.argv[1:]:
         printPixels("Persisting", persisting, g)
         printPixels("Decay"     , decay     , g)
         printPixels("Growth"    , growth    , g)
+        printPixels("Irregular" , irregular , g)
 
     #
     # Load the skeleton of the current time step and of the previous time step. Use

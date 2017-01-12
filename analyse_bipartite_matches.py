@@ -297,10 +297,9 @@ for filename in sys.argv[1:]:
     # Print "classified" pixels
     #
 
-    if printClassifiedPixels:
-        printPixels(persisting)
-        printPixels(created)
-        printPixels(destroyed)
+    #printPixels("persisting", persisting)
+    #printPixels("created", created)
+    #printPixels(destroyed)
 
     #
     # Load the skeleton of the current time step and of the previous time step. Use
@@ -327,14 +326,14 @@ for filename in sys.argv[1:]:
         for pixel in segment:
             ages[index].append( creationTime.get( pixel, t+1) )
 
-    print( "# t = %d" % t )
+    outputAges = "/tmp/t%02d_ages.txt" % (t+1)
 
-    for index in sorted( ages.keys() ):
-        j = 0
-        for (x,y) in segments[index]:
-            print("%d\t%d\t%d" % (x,y, ages[index][j]))
-            j += 1
-
-    print("\n\n")
+    with open(outputAges, "w") as g:
+        for index in sorted( ages.keys() ):
+            j = 0
+            for (x,y) in segments[index]:
+                print("%d\t%d\t%d" % (x,y, ages[index][j]), file=g)
+                j += 1
+        print("\n\n", file=g)
 
     previousCreationTime = creationTime

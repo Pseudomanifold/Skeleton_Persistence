@@ -98,6 +98,19 @@ t        = 0
 printClassifiedPixels = False
 
 """
+Finds the partner of a pixel in the subsequent time step when that pixel
+has no direct match.
+"""
+def findPartnersT0(pixel):
+    (c,d)    = pixel
+    partners = list()
+    for (a,b) in sorted( matchedT0.keys() ):
+        if (c,d) in matchedT0[ (a,b) ]:
+            partners.append( (a,b) )
+
+    return partners
+
+"""
 Queries a union-find data structure to find all pixels that are
 reachable from a given pixel. In essence, this is enumerating a
 connected component in a bipartite graph.
@@ -109,6 +122,10 @@ def collectPartners(pixel):
 
     toVisit = list()
     toVisit.extend( matchedT1[pixel] )
+
+    # Try to kick-start the search for new partners
+    if not toVisit:
+        toVisit = findPartnersT0(pixel)
 
     while True:
         p          = toVisit[0]
@@ -128,19 +145,6 @@ def collectPartners(pixel):
             break
 
     return visitedT0
-
-"""
-Finds the partner of a pixel in the subsequent time step when that pixel
-has no direct match.
-"""
-def findPartnersT0(pixel):
-    (c,d)    = pixel
-    partners = list()
-    for (a,b) in sorted( matchedT0.keys() ):
-        if (c,d) in matchedT0[ (a,b) ]:
-            partners.append( (a,b) )
-
-    return partners
 
 """
 Propagates creation time information to the pixels of the next time
@@ -165,7 +169,15 @@ def propagateCreationTimeInformation():
         # current time step, so we assume that all pixels have the
         # creation time of the subsequent time step.
         elif (c,d) in growth:
-            creationTime[ (c,d) ] = t+1
+            if t == 1:
+                creationTime[ (c,d) ] = 1
+            elif not matchedT1[ (c,d) ]:
+                creationTime[ (c,d) ] = t+1
+                # TODO: Count "creators" in the current time step in
+                # order to figure out which pixels are "true" growth
+                # pixels?
+            else:
+                creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ matchedT1[ (c,d) ][0] ]
 
         # For decay pixels, there are multiple partners in the current
         # time step, so we use the oldest one.
@@ -183,8 +195,6 @@ def propagateCreationTimeInformation():
             # Ultima ratio
             if t == 1:
                 creationTime[ (c,d) ] = 1
-            elif not partners:
-                creationTime[ (c,d) ] = t+1
             else:
                 partners              = collectPartners( (c,d) )
                 creationTime[ (c,d) ] = min( [previousCreationTime[partner] for partner in partners ] )
@@ -342,6 +352,14 @@ for filename in sys.argv[1:]:
                              - len(persisting) \
                              - len(growth)     \
                              - len(decay)
+
+    irregularEdges = [ e for e in edges if (e[2],e[3]) in irregular ]
+
+    outputMatching = "/tmp/t%02d_matching.txt" % (t+1)
+
+    with open(outputMatching, "w") as g:
+        for (a,b,c,d) in irregularEdges:
+            print("%d\t%d\t%d\t%d" % (a,b,c,d), file=g)
 
     #
     # Print "classified" pixels

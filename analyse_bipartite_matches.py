@@ -130,17 +130,10 @@ def propagateCreationTimeInformation():
             creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ partner ]
 
         # For growth pixels, there is only a single partner in the
-        # current time step, so we have to copy its creation time.
+        # current time step, so we assume that all pixels have the
+        # creation time of the subsequent time step.
         elif (c,d) in growth:
-            partners = matchedT1[ (c,d) ]
-
-            # If the pixel has not been matched at all, search for
-            # a partner in the current time step.
-            if not partners:
-                partners = findPartnersT0( (c,d) )
-
-            partner               = partners[0]
-            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ partner ]
+            creationTime[ (c,d) ] = t+1
 
         # For decay pixels, there are multiple partners in the current
         # time step, so we use the oldest one.

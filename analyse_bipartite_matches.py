@@ -91,6 +91,19 @@ t        = 0
 printClassifiedPixels = False
 
 """
+Finds the partner of a pixel in the subsequent time step when that pixel
+has no direct match.
+"""
+def findPartnersT0(pixel):
+    (c,d)    = pixel
+    partners = list()
+    for (a,b) in sorted( matchedT0.keys() ):
+        if (c,d) in matchedT0[ (a,b) ]:
+            partners.append( (a,b) )
+
+    return partners
+
+"""
 Propagates creation time information to the pixels of the next time
 step. This is central for calculating 'skeleton persistence'.
 """
@@ -108,6 +121,26 @@ def propagateCreationTimeInformation():
         if (c,d) in persisting:
             partner               = matchedT1[ (c,d) ][0]
             creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ partner ]
+
+        # For growth pixels, there is only a single partner in the
+        # current time step, so we have to copy its creation time.
+        elif (c,d) in growth:
+            partners = matchedT1[ (c,d) ]
+
+            # If the pixel has not been matched at all, search for
+            # a partner in the current time step.
+            if not partners:
+                partners = findPartnersT0( (c,d) )
+
+            partner               = partners[0]
+            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ partner ]
+        # For decay pixels, there are multiple partners in the current
+        # time step, so we use the oldest one.
+        elif (c,d) in decay:
+            partners              = matchedT1[ (c,d) ]
+            times                 = [ previousCreationTime[ partner ] for partner in partners ]
+            creationTime[ (c,d) ] = min(times)
+
         # Set the creation time of all other pixels to the subsequent time
         # step. Ideally, the amount of pixels treated like this should be
         # extremely small.

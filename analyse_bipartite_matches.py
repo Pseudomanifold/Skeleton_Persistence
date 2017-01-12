@@ -142,11 +142,19 @@ def propagateCreationTimeInformation():
             times                 = [ previousCreationTime[ partner ] for partner in partners ]
             creationTime[ (c,d) ] = min(times)
 
-        # Set the creation time of all other pixels to the subsequent time
-        # step. Ideally, the amount of pixels treated like this should be
-        # extremely small.
+        # Set the creation time of all other pixels to the minimum of
+        # their partner time steps. Ideally, the amount of pixels
+        # treated like this should be extremely small.
         else:
-            creationTime[ (c,d) ] = t+1
+            partners              = matchedT1[ (c,d) ]
+
+            # Ultima ratio
+            if t == 1:
+                creationTime[ (c,d) ] = 1
+            elif not partners:
+                creationTime[ (c,d) ] = t+1
+            else:
+                creationTime[ (c,d) ] = min( [previousCreationTime[partner] for partner in partners ] )
 
     return creationTime
 

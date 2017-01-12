@@ -333,29 +333,51 @@ for filename in sys.argv[1:]:
     #
 
     skeletonPath             = makeSkeletonPath(filename,t+1)
-    segments, branchVertices = skel.getSegments(skeletonPath)
+    segments, branchVertices = skel.getSegments(skeletonPath, appendBranchVertices=True)
     ages                     = collections.defaultdict(list)
+
+    # Try to fix the creation times of branch vertices
+    for (x0,y0) in branchVertices:
+        neighbours = list()
+        for (x1,y1) in branchVertices:
+            if x0 != x1 or y0 != y1:
+                if abs(x0-x1) + abs(y0-y1) <= 2:
+                    neighbours.append( (x1,y1) )
+        times = [ creationTime[ (x,y) ] for (x,y) in neighbours ] + [ creationTime[ (x0,y0) ] ]
+        if min(times) < creationTime[ (x0,y0) ]:
+            creationTime[ (x0,y0) ] = min(times)
 
     for index,segment in enumerate(segments):
         for pixel in segment:
-            ages[index].append( creationTime[pixel] )
+            # Do not consider branch vertices for determining creation
+            # times. Else, the propagation of ages along segments will
+            # not work correctly.
+            if pixel not in branchVertices:
+                ages[index].append( creationTime[pixel] )
 
     outputSegmentAges        = "/tmp/t%02d_segment_ages.txt" % (t+1)
     outputSegmentPersistence = "/tmp/t%02d_segment_persistence.txt" % (t+1)
 
-    branchVertices = set(branchVertices)
+    branchVertices     = set(branchVertices)
+    persistenceDiagram = collections.Counter()
 
     with open(outputSegmentAges, "w") as g, open(outputSegmentPersistence, "w") as h:
         for index,segment in enumerate(segments):
-            a = 1000
-            b = 1000
+            ti = 1000
+            tj = 1000
             for (x,y) in segment:
-                a = min(ages[index])
-                print("%d\t%d\t%d" % (x,y,a), file=g)
+                ti = min(ages[index])
+                print("%d\t%d\t%d" % (x,y,ti), file=g)
                 if (x,y) in branchVertices:
-                    b = min(b, creationTime[ (x,y) ])
+                    tj = min(tj, creationTime[ (x,y) ])
 
-            print(a,b,file=h)
+            # Increase multiplicity of said point
+            persistenceDiagram[ (ti,tj) ] += 1
+
+        # Store persistence diagram along with multiplicities
+        for p,count in persistenceDiagram.most_common():
+            (ti,tj) = p
+            print("%d\t%d\t%d" % (ti,tj,count), file=h)
 
     outputAges = "/tmp/t%02d_ages.txt" % (t+1)
 

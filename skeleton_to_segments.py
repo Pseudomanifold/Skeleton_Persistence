@@ -88,7 +88,7 @@ def validNeighbours(x,y):
     return list( filter( lambda x : valid(x[0],x[1]), [ (x+ox,y+oy) for (ox,oy) in offset ] ) )
 
 """ Partitions a skeleton into its segments """
-def getSegments(filename):
+def getSegments(filename, appendBranchVertices=True):
     with open(filename) as f:
         coordinates    = dict() # Maps a coordinate to an index
         indices        = dict() # Maps an index to a coordinate
@@ -148,11 +148,12 @@ def getSegments(filename):
             segments[root] = ufSegments.vertices(root)
 
         # Append branch vertices to all matching segments
-        for vertex in branchVertices:
-            for neighbour in neighbours[vertex]:
-                if neighbour in regularVertices:
-                    root = ufSegments.find(neighbour) 
-                    segments[root].append(vertex)
+        if appendBranchVertices:
+            for vertex in branchVertices:
+                for neighbour in neighbours[vertex]:
+                    if neighbour in regularVertices:
+                        root = ufSegments.find(neighbour) 
+                        segments[root].append(vertex)
 
         result = []
 

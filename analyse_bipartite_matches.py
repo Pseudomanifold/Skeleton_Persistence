@@ -61,24 +61,16 @@ def findUnmatchedPixelsInSkeleton(matches, filename):
 
     return unmatched, n
 
-# Stores matches for the current time step (a) and the subsequent time
-# step (b). The key is a pixel tuple here, while the value stores all
-# the corresponding matches.
-#
-# Note that both structures are by necessity _directed_.
-aMatches = collections.defaultdict(list)
-bMatches = collections.defaultdict(list)
+# Stores all pixels of the current time (t0) and the subsequent time
+# step (t1). This is necessary to assign proper creation times.
+pixelsT0 = set()
+pixelsT1 = set()
 
-# Stores all pixels in the current time step (a) that have a match in the
-# subsequent time step. Note that this means that they have been found in
-# the backward matching step. 
-aHaveMatch = set()
-bHaveMatch = set()
-
-allEdges       = set()
-oneToOneEdges  = set()
-oneToManyEdges = set()
-manyToOneEdges = set()
+# Stores which pixels have been matched by other pixels. The key is
+# a pixel from the current time step, while the value contains all
+# pixels from the subsequent time step that match said pixel.
+matchedT0 = collections.defaultdict(list)
+matchedT1 = collections.defaultdict(list)
 
 # Stores all creation times of pixels in the previous time step. This is
 # necessary in order to correctly propagate time information throughout
@@ -87,9 +79,9 @@ previousCreationTime = dict()
 
 # Partitions pixels in the current time step according to how they can
 # be assigned to pixels in the subsequent time step.
-created    = set()
-destroyed  = set()
 persisting = set()
+growth     = set()
+decay      = set()
 
 filename = sys.argv[1]
 t        = 0
@@ -110,46 +102,72 @@ def propagateCreationTimeInformation():
     # time step or it is set to the current time step.
     creationTime = dict()
 
-    for (a,b,c,d) in allEdges:
-        # Unambiguous case: There is an exact match between two pixels,
-        # so we just the previous creation time again.
-        if (a,b,c,d) in oneToOneEdges:
-            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
-        # One-to-many matching: One pixel with a known creation time has
-        # been matched to multiple pixels with unknown creation times.
-        #
-        # FIXME: Not sure whether this is correct.
-        elif (a,b,c,d) in oneToManyEdges:
-            # Bailing out for now and treating the pixel as a new pixel. This
-            # is probably the right way here.
-            creationTime[ (c,d) ] = t+1
-
-        # Many-to-one matching: A pixel in the subsequent time step has many
-        # progenitors in the current time step. Here we have a choice between
-        # choosing some creation time from the set of all creation times.
-        elif (a,b,c,d) in manyToOneEdges:
-            creationTimes         = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
-            creationTime[ (c,d) ] = min(creationTimes)
-
-        # Irregular edges: No clear assignment possible to one time step. Here,
-        # a majority vote of all possible creation times makes sense.
-        elif (a,b,c,d) in irregularEdges:
-            # FIXME: Does it make sense to go further here by jumping into the
-            # first set, collect all matches in the second set, collect their
-            # matches, and so on, until the process converges?
-            if t == 1:
-                creationTimes = [ 1 ] * len( bMatches[ (c,d) ] )
-            else:
-                creationTimes = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
-            creationTime[ (c,d) ] = max( creationTimes )
+    for (c,d) in pixelsT1:
+        # For persisting pixels, we only have the opportunity to keep the
+        # creation time.
+        if (c,d) in persisting:
+            partner               = matchedT1[ (c,d) ][0]
+            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ partner ]
+        # Set the creation time of all other pixels to the subsequent time
+        # step. Ideally, the amount of pixels treated like this should be
+        # extremely small.
         else:
             creationTime[ (c,d) ] = t+1
+
+    #for (a,b,c,d) in allEdges:
+    #    # Unambiguous case: There is an exact match between two pixels,
+    #    # so we just the previous creation time again.
+    #    if (a,b,c,d) in oneToOneEdges:
+    #        creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
+    #    # One-to-many matching: One pixel with a known creation time has
+    #    # been matched to multiple pixels with unknown creation times.
+    #    #
+    #    # FIXME: Not sure whether this is correct.
+    #    elif (a,b,c,d) in oneToManyEdges:
+    #        # Bailing out for now and treating the pixel as a new pixel. This
+    #        # is probably the right way here.
+    #        creationTime[ (c,d) ] = t+1
+
+    #    # Many-to-one matching: A pixel in the subsequent time step has many
+    #    # progenitors in the current time step. Here we have a choice between
+    #    # choosing some creation time from the set of all creation times.
+    #    elif (a,b,c,d) in manyToOneEdges:
+    #        creationTimes         = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
+    #        creationTime[ (c,d) ] = min(creationTimes)
+
+    #    # Irregular edges: No clear assignment possible to one time step. Here,
+    #    # a majority vote of all possible creation times makes sense.
+    #    elif (a,b,c,d) in irregularEdges:
+    #        # FIXME: Does it make sense to go further here by jumping into the
+    #        # first set, collect all matches in the second set, collect their
+    #        # matches, and so on, until the process converges?
+    #        if t == 1:
+    #            creationTimes = [ 1 ] * len( bMatches[ (c,d) ] )
+    #        else:
+    #            creationTimes = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
+    #        creationTime[ (c,d) ] = max( creationTimes )
+    #    else:
+    #        creationTime[ (c,d) ] = t+1
 
     return creationTime
 
 """ main """
 for filename in sys.argv[1:]:
     with open(filename) as f:
+
+        #
+        # Cleanup
+        #
+
+        matchedT0.clear()
+        matchedT1.clear()
+
+        pixelsT0.clear()
+        pixelsT1.clear()
+
+        persisting.clear()
+        growth.clear()
+        decay.clear()
 
         # Skip all files that do not contain directed matching information.
         # This makes it easier for me to process a whole directory.
@@ -167,70 +185,75 @@ for filename in sys.argv[1:]:
             (a,b,direction,c,d) = line.split() 
             (a,b,c,d)           = ( int(a), int(b), int(c), int(d) )
 
+            # FIXME: Not sure whether I need the pixels from the current
+            # time step as well, but it cannot hurt...
+            pixelsT0.add( (a,b) )
+            pixelsT1.add( (c,d) )
+
             # Pixel (c,d) has at least one match, induced by the current time step,
             # hence there is some structure that persists until that time step.
             if direction == "->":
-                bHaveMatch.add( (c,d) )
+                matchedT1[ (c,d) ].append( (a,b) )
 
             # Pixel (a,b) has at least one match, induced by the subsequent time
             # step, hence there is some structure that persists until that time
             # step.
             elif direction == "<-":
-                aHaveMatch.add( (a,b) )
-
-            if (c,d) not in aMatches[ (a,b) ]:
-                aMatches[ (a,b) ].append( (c,d) )
-
-            if (a,b) not in bMatches[ (c,d) ]:
-                bMatches[ (c,d) ].append( (a,b) )
-
-            allEdges.add( (a,b,c,d) )
-
-    numMatches = len(allEdges)
+                matchedT0[ (a,b) ].append( (c,d) )
 
     #
-    # Find one-to-one matches. As this task is symmetrical by nature, it
-    # suffices to traverse one of the dictionaries.
+    # Find one-to-one matches
     #
+
     numOneToOneMatches = 0
 
-    for (a,b) in sorted( aMatches.keys() ):
-        aPartners = aMatches[ (a,b) ]
-        if len(aPartners) == 1:
-            (c,d)     = aPartners[0]
-            bPartners = bMatches[ (c,d) ]
+    for (a,b) in sorted( matchedT0.keys() ):
+        partnersT1 = matchedT0[ (a,b) ] # All pixels in the subsequent time step
+                                        # that match to the current pixel
 
-            if len(bPartners) == 1:
+        if len(partnersT1) == 1:
+            (c,d)      = partnersT1[0]
+            partnersT0 = matchedT1[ (c,d) ] # All pixels in the current time step
+                                            # that match to the current pixel
+
+            if len(partnersT0) == 1 and partnersT0[0] == (a,b):
                 numOneToOneMatches += 1
-                oneToOneEdges.add( (a,b,c,d) )
+                persisting.add( (c,d) )
 
-                persisting.add( (a,b) )
-
-    print("One-to-one matches: %d/%d (%.3f)" % (numOneToOneMatches, numMatches, numOneToOneMatches / numMatches), file=sys.stderr)
+    print("One-to-one matches: %d/%d (%.3f)" % (len(persisting), len(pixelsT1), len(persisting) / len(pixelsT1) ), file=sys.stderr)
 
     #
-    # Find one-to-many matches
+    # Find one-to-many matches: Multiple pixels in the subsequent time
+    # step match the same pixel in the current time step. The pixel in
+    # the current time step matches one of them.
     #
 
-    numOneToManyMatches = 0
+    for (a,b) in sorted( matchedT0.keys() ):
+        partnersT1  = matchedT0[ (a,b) ]
 
-    for (a,b) in sorted( aMatches.keys() ):
-        matches = aMatches[ (a,b) ]
-        if len(matches) > 1:
-            singleMatch = True
-            for (c,d) in matches:
-                if len( bMatches[ (c,d) ] ) != 1:
-                    singleMatch = False
-                    break
-            if singleMatch:
-                numOneToManyMatches += len(matches)
+        # If the pixel is matched by at most one other pixel, it cannot
+        # be part of a true one-to-many matching.
+        if len(partnersT1) <= 1:
+            continue
 
-                for (c,d) in matches:
-                    oneToManyEdges.add( (a,b,c,d) )
+        # Indicates that at most one single pixel in the current time
+        # step matches the pixel in the subsequent time step.
+        singleMatch = True
 
-                created.add( (a,b) )
+        for (c,d) in partnersT1:
+            partnersT0 = matchedT1[ (c,d) ]
 
-    print("One-to-many matches: %d/%d (%.3f)" % (numOneToManyMatches, numMatches, numOneToManyMatches / numMatches), file=sys.stderr)
+            # If there is a partner in the current time step it must by
+            # necessity be the pixel (a,b).
+            if len(partnersT0) == 1 and partnersT0[0] != (a,b):
+                singleMatch = False
+            elif len(partnersT0) > 1:
+                singleMatch = False
+
+        if singleMatch:
+            growth.update( partnersT1 )
+
+    print("One-to-many matches: %d/%d (%.3f)" % (len(growth), len(pixelsT1), len(growth) / len(pixelsT1) ), file=sys.stderr)
 
     #
     # Find many-to-one matches
@@ -238,30 +261,39 @@ for filename in sys.argv[1:]:
 
     numManyToOneMatches = 0
 
-    for (c,d) in sorted( bMatches.keys() ):
-        matches = bMatches[ (c,d) ]
-        if len(matches) > 1:
-            singleMatch = True
-            for (a,b) in matches:
-                if len( aMatches[ (a,b) ] ) != 1:
-                    singleMatch = False
-                    break
-            if singleMatch:
-                numManyToOneMatches += len(matches)
+    for (c,d) in sorted( matchedT1.keys() ):
+        partnersT0  = matchedT1[ (c,d) ]
 
-                for (a,b) in matches:
-                    manyToOneEdges.add( (a,b,c,d) )
-                    destroyed.add( (a,b) )
+        # If the pixel is matched by at most one other pixel, it cannot
+        # be part of a true one-to-many matching.
+        if len(partnersT0) <= 1:
+            continue
 
-    print("Many-to-one matches: %d/%d (%.3f)" % (numManyToOneMatches, numMatches, numManyToOneMatches / numMatches), file=sys.stderr)
+        # Indicates that at most one single pixel in the subsequent time
+        # step matches the pixel in the current time step.
+        singleMatch = True
 
-    #
-    # Irregular edges
-    #
+        for (a,b) in partnersT0:
+            partnersT1 = matchedT0[ (a,b) ]
 
-    irregularEdges = allEdges - oneToOneEdges - oneToManyEdges - manyToOneEdges
+            # If there is a partner in the subsequent time step it must
+            # by necessity be the pixel (c,d).
+            if len(partnersT1) == 1 and partnersT1[0] != (c,d):
+                singleMatch = False
+            elif len(partnersT1) > 1:
+                singleMatch = False
 
-    print("Irregular matches: %d/%d (%.3f)" % (len(irregularEdges), numMatches, len(irregularEdges) / numMatches), file=sys.stderr)
+        if singleMatch:
+            decay.add( (c,d ) )
+
+    print("Many-to-one matches: %d/%d (%.3f)" % (len(decay), len(pixelsT1), len(decay) / len(pixelsT1) ), file=sys.stderr)
+
+    irregularPixels = pixelsT1 - persisting - growth - decay
+
+    assert len(irregularPixels) ==   len(pixelsT1)   \
+                                   - len(persisting) \
+                                   - len(growth)     \
+                                   - len(decay)
 
     #
     # Print "classified" pixels
@@ -295,22 +327,16 @@ for filename in sys.argv[1:]:
 
     for index,segment in enumerate(segments):
         for pixel in segment:
-            ages[index].append( creationTime[pixel] )
+            ages[index].append( creationTime.get( pixel, t+1) )
+
+    print( "# t = %d" % t )
 
     for index in sorted( ages.keys() ):
+        j = 0
         for (x,y) in segments[index]:
-            print("%d\t%d\t%d" % (x,y, min(ages[index])))
+            print("%d\t%d\t%d" % (x,y, ages[index][j]))
+            j += 1
 
     print("\n\n")
 
     previousCreationTime = creationTime
-
-    # Cleanup for the next time step. This could possibly be solved more
-    # elegantly, I guess.
-    allEdges       = set()
-    oneToOneEdges  = set()
-    oneToManyEdges = set()
-    manyToOneEdges = set()
-
-    aMatches.clear()
-    bMatches.clear()

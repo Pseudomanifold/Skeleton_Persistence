@@ -16,6 +16,6 @@ do for [t = 2:84] {
 
   set pointsize 1.0
 
-  plot in with points palette pt 7 lc rgb black, x with l lc rgb 'black'
+  plot in with points palette pt 7, x with l lc rgb 'black'
 }
 

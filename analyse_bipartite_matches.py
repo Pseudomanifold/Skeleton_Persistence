@@ -40,10 +40,16 @@ def distance( a,b,c,d ):
     return (a-c)**2 + (b-d)**2
 
 """ Prints a set of pixels """
-def printPixels(pixels):
-    for (a,b) in pixels:
-        print("%d\t%d" % (a,b))
-    print("\n")
+def printPixels(name, pixels, f):
+    print("# %s" % name)
+    if pixels:
+        for (a,b) in pixels:
+            print("%d\t%d" % (a,b), file=f)
+    else:
+        # Print a dummy pixel to ensure that gnuplot is able to display
+        # the index correctly
+        print("0\t0", file=f)
+    print("\n", file=f)
 
 """
 Updates a set of unmatched pixels. Traverses a skeleton file and checks whether
@@ -297,9 +303,12 @@ for filename in sys.argv[1:]:
     # Print "classified" pixels
     #
 
-    #printPixels("persisting", persisting)
-    #printPixels("created", created)
-    #printPixels(destroyed)
+    outputClassification = "/tmp/t%02d_classification.txt" % (t+1)
+
+    with open(outputClassification, "w") as g:
+        printPixels("Persisting", persisting, g)
+        printPixels("Decay"     , decay     , g)
+        printPixels("Growth"    , growth    , g)
 
     #
     # Load the skeleton of the current time step and of the previous time step. Use

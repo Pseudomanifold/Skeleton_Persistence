@@ -14,8 +14,8 @@ do for [t = 2:84] {
   set terminal svg background rgb 'white' size 1000,1000
   set output out
 
-  set pointsize 1.0
-
-  plot in with points palette pt 7, x with l lc rgb 'black'
+  plot in with points lc rgb 'black' pt 7 ps 1.25,\
+       "" with points palette pt 7 ps 1.0,        \
+        x with l lc rgb 'black'
 }
 

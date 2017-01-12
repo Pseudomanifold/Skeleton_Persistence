@@ -147,41 +147,6 @@ def propagateCreationTimeInformation():
         else:
             creationTime[ (c,d) ] = t+1
 
-    #for (a,b,c,d) in allEdges:
-    #    # Unambiguous case: There is an exact match between two pixels,
-    #    # so we just the previous creation time again.
-    #    if (a,b,c,d) in oneToOneEdges:
-    #        creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
-    #    # One-to-many matching: One pixel with a known creation time has
-    #    # been matched to multiple pixels with unknown creation times.
-    #    #
-    #    # FIXME: Not sure whether this is correct.
-    #    elif (a,b,c,d) in oneToManyEdges:
-    #        # Bailing out for now and treating the pixel as a new pixel. This
-    #        # is probably the right way here.
-    #        creationTime[ (c,d) ] = t+1
-
-    #    # Many-to-one matching: A pixel in the subsequent time step has many
-    #    # progenitors in the current time step. Here we have a choice between
-    #    # choosing some creation time from the set of all creation times.
-    #    elif (a,b,c,d) in manyToOneEdges:
-    #        creationTimes         = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
-    #        creationTime[ (c,d) ] = min(creationTimes)
-
-    #    # Irregular edges: No clear assignment possible to one time step. Here,
-    #    # a majority vote of all possible creation times makes sense.
-    #    elif (a,b,c,d) in irregularEdges:
-    #        # FIXME: Does it make sense to go further here by jumping into the
-    #        # first set, collect all matches in the second set, collect their
-    #        # matches, and so on, until the process converges?
-    #        if t == 1:
-    #            creationTimes = [ 1 ] * len( bMatches[ (c,d) ] )
-    #        else:
-    #            creationTimes = [ previousCreationTime[ (x,y) ] for (x,y) in bMatches[ (c,d) ] ]
-    #        creationTime[ (c,d) ] = max( creationTimes )
-    #    else:
-    #        creationTime[ (c,d) ] = t+1
-
     return creationTime
 
 """ main """

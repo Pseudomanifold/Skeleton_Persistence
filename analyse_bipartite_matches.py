@@ -21,6 +21,7 @@ import statistics
 import sys
 
 import skeleton_to_segments as skel
+import UnionFind            as uf
 
 """ Returns path to skeleton of a certain time step """
 def makeSkeletonPath(filename, t):
@@ -173,6 +174,11 @@ for filename in sys.argv[1:]:
         growth.clear()
         decay.clear()
 
+        # Stores all edges of the matching, regardless of their
+        # direction. This information is subsequently used to calculate
+        # connected components in the induced bipartite graph.
+        edges = set()
+
         # Skip all files that do not contain directed matching information.
         # This makes it easier for me to process a whole directory.
         if "directed" not in filename:
@@ -204,6 +210,9 @@ for filename in sys.argv[1:]:
             # step.
             elif direction == "<-":
                 matchedT0[ (a,b) ].append( (c,d) )
+
+            # Ignore the direction of the edge
+            edges.add( (a,b,c,d) )
 
     #
     # Find one-to-one matches
@@ -298,6 +307,44 @@ for filename in sys.argv[1:]:
                              - len(persisting) \
                              - len(growth)     \
                              - len(decay)
+
+    verticesT0 = [ (a,b,False) for (a,b) in pixelsT0 ]
+    verticesT1 = [ (c,d,True ) for (c,d) in pixelsT1 ]
+
+    # Union-find data structure for the bipartite graph induced by all edges
+    # in the matching.
+    UF = uf.UnionFind(verticesT0 + verticesT1)
+
+    for edge in edges:
+        (a,b,c,d) = edge
+        u         = (a,b,False)
+        v         = (c,d,True)
+
+        # Notice that the order in which the merging is performed does
+        # not matter at all.
+        UF.merge(u, v)
+
+    components = dict( list() )
+
+    for root in UF.roots():
+        components[root] = UF.vertices(root)
+
+    for root in components:
+        pixels = [ (x,y) for (x,y,D) in components[root] if D == True ]
+
+        isPersisting = True
+        isGrowth     = True
+        isDecay      = True
+        isIrregular  = True
+
+        for pixel in pixels:
+            isPersisting = isPersisting and pixel in persisting
+            isGrowth     = isGrowth     and pixel in growth
+            isDecay      = isDecay      and pixel in decay
+            isIrregular  = isIrregular  and pixel in irregular
+
+        assert not( isPersisting and isGrowth and isDecay and isIrregular )
+        assert    ( isPersisting or  isGrowth or  isDecay or  isIrregular )
 
     #
     # Print "classified" pixels

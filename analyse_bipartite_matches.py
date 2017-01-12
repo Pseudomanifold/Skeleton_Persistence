@@ -98,6 +98,38 @@ t        = 0
 printClassifiedPixels = False
 
 """
+Queries a union-find data structure to find all pixels that are
+reachable from a given pixel. In essence, this is enumerating a
+connected component in a bipartite graph.
+"""
+def collectPartners(pixel):
+    visitedT0 = set()
+    visitedT1 = set()
+    visitedT1.add( pixel )
+
+    toVisit = list()
+    toVisit.extend( matchedT1[pixel] )
+
+    while True:
+        p          = toVisit[0]
+        toVisit    = toVisit[1:]
+        partnersT1 = matchedT0[p]
+
+        visitedT0.add(p)
+
+        for (c,d) in partnersT1:
+            if (c,d) in visitedT1:
+                continue
+            else:
+                toVisit.extend( [p for p in matchedT1[(c,d)] if p not in visitedT0 ] )
+                visitedT1.add( (c,d) )
+
+        if len(toVisit) == 0:
+            break
+
+    return visitedT0
+
+"""
 Finds the partner of a pixel in the subsequent time step when that pixel
 has no direct match.
 """
@@ -154,6 +186,7 @@ def propagateCreationTimeInformation():
             elif not partners:
                 creationTime[ (c,d) ] = t+1
             else:
+                partners              = collectPartners( (c,d) )
                 creationTime[ (c,d) ] = min( [previousCreationTime[partner] for partner in partners ] )
 
     return creationTime

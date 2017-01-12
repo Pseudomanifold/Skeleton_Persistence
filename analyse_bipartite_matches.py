@@ -340,13 +340,22 @@ for filename in sys.argv[1:]:
         for pixel in segment:
             ages[index].append( creationTime[pixel] )
 
-    outputSegmentAges = "/tmp/t%02d_segment_ages.txt" % (t+1)
+    outputSegmentAges        = "/tmp/t%02d_segment_ages.txt" % (t+1)
+    outputSegmentPersistence = "/tmp/t%02d_segment_persistence.txt" % (t+1)
 
-    with open(outputSegmentAges, "w") as g:
+    branchVertices = set(branchVertices)
+
+    with open(outputSegmentAges, "w") as g, open(outputSegmentPersistence, "w") as h:
         for index,segment in enumerate(segments):
+            a = 1000
+            b = 1000
             for (x,y) in segment:
                 a = min(ages[index])
                 print("%d\t%d\t%d" % (x,y,a), file=g)
+                if (x,y) in branchVertices:
+                    b = min(b, creationTime[ (x,y) ])
+
+            print(a,b,file=h)
 
     outputAges = "/tmp/t%02d_ages.txt" % (t+1)
 

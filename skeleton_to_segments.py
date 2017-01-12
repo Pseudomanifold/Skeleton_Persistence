@@ -163,4 +163,4 @@ def getSegments(filename):
 
             result.append(s)
 
-        return result
+        return result, [ indices[u] for u in sorted(branchVertices) ]

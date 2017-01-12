@@ -146,7 +146,7 @@ def propagateCreationTimeInformation():
         # their partner time steps. Ideally, the amount of pixels
         # treated like this should be extremely small.
         else:
-            partners              = matchedT1[ (c,d) ]
+            partners = matchedT1[ (c,d) ]
 
             # Ultima ratio
             if t == 1:
@@ -332,9 +332,9 @@ for filename in sys.argv[1:]:
     # segments and calculate an age based on pixels along a one segment. 
     #
 
-    skeletonPath = makeSkeletonPath(filename,t+1)
-    segments     = skel.getSegments(skeletonPath)
-    ages         = collections.defaultdict(list)
+    skeletonPath             = makeSkeletonPath(filename,t+1)
+    segments, branchVertices = skel.getSegments(skeletonPath)
+    ages                     = collections.defaultdict(list)
 
     for index,segment in enumerate(segments):
         for pixel in segment:
@@ -351,7 +351,7 @@ for filename in sys.argv[1:]:
     outputAges = "/tmp/t%02d_ages.txt" % (t+1)
 
     with open(outputAges, "w") as g:
-        for (x,y) in creationTime:
+        for (x,y) in sorted( creationTime.keys() ):
             print("%d\t%d\t%d" % (x,y, creationTime[ (x,y) ]), file=g)
 
     previousCreationTime = creationTime

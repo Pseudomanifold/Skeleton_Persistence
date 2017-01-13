@@ -97,6 +97,14 @@ t        = 0
 # I need this any more.
 printClassifiedPixels = False
 
+""" Stores a persistence diagram. """
+def storePersistenceDiagram(name, persistenceDiagram):
+    filename = "/tmp/t%02d_%s.txt" % (t+1, name)
+    with open(filename, "w") as f:
+        for p,count in persistenceDiagram.most_common():
+            (x,y) = p
+            print("%d\t%d\t%d" % (x,y,count), file=f)
+
 """
 Finds the partner of a pixel in the subsequent time step when that pixel
 has no direct match.
@@ -406,29 +414,38 @@ for filename in sys.argv[1:]:
             if pixel not in branchVertices:
                 ages[index].append( creationTime[pixel] )
 
-    outputSegmentAges        = "/tmp/t%02d_segment_ages.txt" % (t+1)
-    outputSegmentPersistence = "/tmp/t%02d_segment_persistence.txt" % (t+1)
+    outputSegmentAges       = "/tmp/t%02d_segment_ages.txt" % (t+1)
+    branchVertices          = set(branchVertices)
 
-    branchVertices     = set(branchVertices)
-    persistenceDiagram = collections.Counter()
+    pdBranchPersistenceMin  = collections.Counter()
+    pdBranchPersistenceMean = collections.Counter()
+    pdBranchPersistenceMax  = collections.Counter()
 
-    with open(outputSegmentAges, "w") as g, open(outputSegmentPersistence, "w") as h:
+    with open(outputSegmentAges, "w") as g:
         for index,segment in enumerate(segments):
-            ti = 1000
-            tj = 1000
+            branchCreationTime      = 1000
+            segmentCreationTimeMin  = 1000
+            segmentCreationTimeMean = 1000
+            segmentCreationTimeMax  = 1000
+
             for (x,y) in segment:
-                ti = min(ages[index])
-                print("%d\t%d\t%d" % (x,y,ti), file=g)
+                segmentCreationTimeMin  = min(ages[index])
+                segmentCreationTimeMean = statistics.mean(ages[index])
+                segmentCreationTimeMax  = max(ages[index])
+
+                print("%d\t%d\t%d" % (x,y,segmentCreationTimeMin), file=g)
                 if (x,y) in branchVertices:
-                    tj = min(tj, creationTime[ (x,y) ])
+                    branchCreationTime = min(branchCreationTime, creationTime[ (x,y) ])
 
-            # Increase multiplicity of said point
-            persistenceDiagram[ (ti,tj) ] += 1
+            # Increase multiplicity of all points
+            pdBranchPersistenceMin[  (branchCreationTime, segmentCreationTimeMin) ] += 1
+            pdBranchPersistenceMean[ (branchCreationTime, segmentCreationTimeMean) ] += 1
+            pdBranchPersistenceMax[  (branchCreationTime, segmentCreationTimeMax) ] += 1
 
-        # Store persistence diagram along with multiplicities
-        for p,count in persistenceDiagram.most_common():
-            (ti,tj) = p
-            print("%d\t%d\t%d" % (ti,tj,count), file=h)
+    # Store persistence diagram along with multiplicities
+    storePersistenceDiagram( "segment_branch_persistence_min" , pdBranchPersistenceMin )
+    storePersistenceDiagram( "segment_branch_persistence_mean", pdBranchPersistenceMean )
+    storePersistenceDiagram( "segment_branch_persistence_max" , pdBranchPersistenceMax )
 
     outputAges = "/tmp/t%02d_ages.txt" % (t+1)
 

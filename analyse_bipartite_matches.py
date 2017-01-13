@@ -429,7 +429,6 @@ for filename in sys.argv[1:]:
     outputSegmentBranchPersistence = "/tmp/t%02d_branch_persistence.txt" % (t+1)
     outputSegmentAgePersistence    = "/tmp/t%02d_age_persistence.txt" % (t+1)
 
-
     branchVertices                 = set(branchVertices)
 
     pdBranchPersistenceMin  = collections.Counter()
@@ -455,7 +454,13 @@ for filename in sys.argv[1:]:
                     branchCreationTime = min(branchCreationTime, creationTime[ (x,y) ])
 
             for (x,y) in segment:
-                branchPersistence = abs(segmentCreationTimeMin - branchCreationTime)
+                mode = min(ages[index])
+                try:
+                    mode = statistics.mode( ages[index] )
+                except statistics.StatisticsError:
+                    mode = statistics.mean( ages[index] )
+                    
+                branchPersistence = abs(mode - branchCreationTime)
                 agePersistence    = abs(segmentCreationTimeMax - branchCreationTime)
                 print("%d\t%d\t%d" % (x,y,branchPersistence), file=h)
                 print("%d\t%d\t%d" % (x,y,agePersistence), file=i)

@@ -103,6 +103,17 @@ def storePersistenceDiagram(name, persistenceDiagram):
     with open(filename, "w") as f:
         for p,count in persistenceDiagram.most_common():
             (x,y) = p
+
+            # The corresponding branch point creation time must not be
+            # higher than the segment age. These inconsistencies occur
+            # sometimes; the lazy way to handle them requires changing
+            # the branch creation time.
+            #
+            # If we apply some neighbour-based smoothing in the future
+            # these points will automatically disappear.
+            if x > y:
+                x = y-1
+
             print("%d\t%d\t%d" % (x,y,count), file=f)
 
 """
@@ -421,7 +432,9 @@ for filename in sys.argv[1:]:
     pdBranchPersistenceMean = collections.Counter()
     pdBranchPersistenceMax  = collections.Counter()
 
-    with open(outputSegmentAges, "w") as g:
+    numIsolatedSegments     = 0
+
+    with open(outputSegmentAges,     "w") as g:
         for index,segment in enumerate(segments):
             branchCreationTime      = 1000
             segmentCreationTimeMin  = 1000
@@ -437,6 +450,11 @@ for filename in sys.argv[1:]:
                 if (x,y) in branchVertices:
                     branchCreationTime = min(branchCreationTime, creationTime[ (x,y) ])
 
+            # If no branch point exists, the segment is isolated. This
+            # may be interesting for some applications.
+            if branchCreationTime == 1000:
+                numIsolatedSegments += 1
+
             # Increase multiplicity of all points
             pdBranchPersistenceMin[  (branchCreationTime, segmentCreationTimeMin) ] += 1
             pdBranchPersistenceMean[ (branchCreationTime, segmentCreationTimeMean) ] += 1
@@ -446,6 +464,8 @@ for filename in sys.argv[1:]:
     storePersistenceDiagram( "segment_branch_persistence_min" , pdBranchPersistenceMin )
     storePersistenceDiagram( "segment_branch_persistence_mean", pdBranchPersistenceMean )
     storePersistenceDiagram( "segment_branch_persistence_max" , pdBranchPersistenceMax )
+
+    print("Isolated segments: %d/%d (%.3f)" % (numIsolatedSegments, len(segments), numIsolatedSegments / len(segments) ), file=sys.stderr)
 
     outputAges = "/tmp/t%02d_ages.txt" % (t+1)
 

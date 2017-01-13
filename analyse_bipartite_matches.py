@@ -112,7 +112,7 @@ def storePersistenceDiagram(name, persistenceDiagram):
             # If we apply some neighbour-based smoothing in the future
             # these points will automatically disappear.
             if x > y:
-                x = y-1
+                pass
 
             print("%d\t%d\t%d" % (x,y,count), file=f)
 

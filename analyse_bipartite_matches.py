@@ -425,8 +425,12 @@ for filename in sys.argv[1:]:
             if pixel not in branchVertices:
                 ages[index].append( creationTime[pixel] )
 
-    outputSegmentAges       = "/tmp/t%02d_segment_ages.txt" % (t+1)
-    branchVertices          = set(branchVertices)
+    outputSegmentAges              = "/tmp/t%02d_segment_ages.txt" % (t+1)
+    outputSegmentBranchPersistence = "/tmp/t%02d_branch_persistence.txt" % (t+1)
+    outputSegmentAgePersistence    = "/tmp/t%02d_age_persistence.txt" % (t+1)
+
+
+    branchVertices                 = set(branchVertices)
 
     pdBranchPersistenceMin  = collections.Counter()
     pdBranchPersistenceMean = collections.Counter()
@@ -434,21 +438,27 @@ for filename in sys.argv[1:]:
 
     numIsolatedSegments     = 0
 
-    with open(outputSegmentAges,     "w") as g:
+    with open(outputSegmentAges,     "w")          as g,\
+         open(outputSegmentBranchPersistence, "w") as h,\
+         open(outputSegmentAgePersistence, "w")    as i:
         for index,segment in enumerate(segments):
             branchCreationTime      = 1000
-            segmentCreationTimeMin  = 1000
-            segmentCreationTimeMean = 1000
-            segmentCreationTimeMax  = 1000
+
+            segmentCreationTimeMin  = min(ages[index])
+            segmentCreationTimeMean = statistics.mean(ages[index])
+            segmentCreationTimeMax  = max(ages[index])
 
             for (x,y) in segment:
-                segmentCreationTimeMin  = min(ages[index])
-                segmentCreationTimeMean = statistics.mean(ages[index])
-                segmentCreationTimeMax  = max(ages[index])
 
                 print("%d\t%d\t%d" % (x,y,segmentCreationTimeMin), file=g)
                 if (x,y) in branchVertices:
                     branchCreationTime = min(branchCreationTime, creationTime[ (x,y) ])
+
+            for (x,y) in segment:
+                branchPersistence = abs(segmentCreationTimeMin - branchCreationTime)
+                agePersistence    = abs(segmentCreationTimeMax - branchCreationTime)
+                print("%d\t%d\t%d" % (x,y,branchPersistence), file=h)
+                print("%d\t%d\t%d" % (x,y,agePersistence), file=i)
 
             # If no branch point exists, the segment is isolated. This
             # may be interesting for some applications.

@@ -464,7 +464,7 @@ for filename in sys.argv[1:]:
                     
                 branchPersistence = abs(mode - branchCreationTime)
                 agePersistence    = abs(segmentCreationTimeMax - branchCreationTime)
-                growthPersistence = abs(max(ages[index]) - (t+1))
+                growthPersistence = abs(mode - (t+1))
                 print("%d\t%d\t%d" % (x,y,branchPersistence), file=h)
                 print("%d\t%d\t%d" % (x,y,agePersistence),    file=i)
                 print("%d\t%d\t%d" % (x,y,growthPersistence), file=j)

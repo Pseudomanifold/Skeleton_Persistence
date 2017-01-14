@@ -14,6 +14,7 @@ do for [t = 02:84] {
 
   unset tics
   unset border
+  unset colorbox
 
   set size ratio 0.5
   set terminal png background rgb 'white'

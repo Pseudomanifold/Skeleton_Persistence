@@ -428,6 +428,7 @@ for filename in sys.argv[1:]:
     outputSegmentAges              = "/tmp/t%02d_segment_ages.txt" % (t+1)
     outputSegmentBranchPersistence = "/tmp/t%02d_branch_persistence.txt" % (t+1)
     outputSegmentAgePersistence    = "/tmp/t%02d_age_persistence.txt" % (t+1)
+    outputSegmentGrowthPersistence = "/tmp/t%02d_growth_persistence.txt" % (t+1)
 
     branchVertices                 = set(branchVertices)
 
@@ -439,7 +440,8 @@ for filename in sys.argv[1:]:
 
     with open(outputSegmentAges,     "w")          as g,\
          open(outputSegmentBranchPersistence, "w") as h,\
-         open(outputSegmentAgePersistence, "w")    as i:
+         open(outputSegmentAgePersistence, "w")    as i,\
+         open(outputSegmentGrowthPersistence, "w") as j:
         for index,segment in enumerate(segments):
             branchCreationTime      = 1000
 
@@ -462,8 +464,10 @@ for filename in sys.argv[1:]:
                     
                 branchPersistence = abs(mode - branchCreationTime)
                 agePersistence    = abs(segmentCreationTimeMax - branchCreationTime)
+                growthPersistence = abs(max(ages[index]) - (t+1))
                 print("%d\t%d\t%d" % (x,y,branchPersistence), file=h)
-                print("%d\t%d\t%d" % (x,y,agePersistence), file=i)
+                print("%d\t%d\t%d" % (x,y,agePersistence),    file=i)
+                print("%d\t%d\t%d" % (x,y,growthPersistence), file=j)
 
             # If no branch point exists, the segment is isolated. This
             # may be interesting for some applications.

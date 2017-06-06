@@ -1,6 +1,6 @@
 do for [t = 2:84] {
 
-  load "~/Local/gnuplot-colorbrewer/sequential/Greys.plt"
+  load "/usr/share/gnuplot-colorbrewer/sequential/Greys.plt"
   set palette negative
 
   in  = sprintf('t%02d_segment_branch_persistence_min.txt', t)
@@ -22,7 +22,7 @@ do for [t = 2:84] {
 
 do for [t = 2:84] {
 
-  load "~/Local/gnuplot-colorbrewer/sequential/Greys.plt"
+  load "/usr/share/gnuplot-colorbrewer/sequential/Greys.plt"
   set palette negative
 
   in  = sprintf('t%02d_segment_branch_persistence_mean.txt', t)
@@ -44,7 +44,7 @@ do for [t = 2:84] {
 
 do for [t = 2:84] {
 
-  load "~/Local/gnuplot-colorbrewer/sequential/Greys.plt"
+  load "/usr/share/gnuplot-colorbrewer/sequential/Greys.plt"
   set palette negative
 
   in  = sprintf('t%02d_segment_branch_persistence_max.txt', t)

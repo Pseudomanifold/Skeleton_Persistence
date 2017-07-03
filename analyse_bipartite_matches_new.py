@@ -48,6 +48,7 @@ previousCreationTime = dict()
 created    = set()
 destroyed  = set()
 persisting = set()
+growth     = set()
 
 filename = sys.argv[1]
 t        = 0
@@ -69,8 +70,15 @@ def propagateCreationTimeInformation():
         creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
 
     for (c,d) in growth:
-        (a,b)                 = forwardMatches[ (c,d) ][0]
-        creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
+        if forwardMatches[ (c,d) ]:
+            (a,b)                 = forwardMatches[ (c,d) ][0]
+            creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
+        else:
+            # If no forward matches exist but the pixel is a growth
+            # pixel, there is at most one potential backward match.
+            for (a,b) in backwardMatches:
+                if (c,d) in backwardMatches[ (a,b) ]:
+                    creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
 
     for l in backwardMatches.values():
         for (c,d) in l:

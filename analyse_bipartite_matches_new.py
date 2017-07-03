@@ -78,12 +78,22 @@ def propagateCreationTimeInformation():
             # pixel, there is at most one potential backward match.
             for (a,b) in backwardMatches:
                 if (c,d) in backwardMatches[ (a,b) ]:
-                    creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ]
+                    creationTime[ (c,d) ] = 1 if t == 1 else previousCreationTime[ (a,b) ] + 1
 
-    for l in backwardMatches.values():
-        for (c,d) in l:
+    unmatched = collections.defaultdict(list)
+    for (a,b) in backwardMatches:
+        for (c,d) in backwardMatches[ (a,b) ]:
             if (c,d) not in creationTime:
-                creationTime[ (c,d) ] = t+1
+                unmatched[ (c,d) ].append( (a,b) )
+    
+    for (c,d) in unmatched:
+        for (a,b) in unmatched[(c,d)]:
+            creationTime[ (c,d) ] = 1 if t == 1 else min([previousCreationTime[(a,b)] for (a,b) in unmatched[(c,d)]])
+
+    #for l in backwardMatches.values():
+    #    for (c,d) in l:
+    #        if (c,d) not in creationTime:
+    #            creationTime[ (c,d) ] = t+1
 
     return creationTime
 

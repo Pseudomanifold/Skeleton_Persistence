@@ -90,6 +90,27 @@ def propagateCreationTimeInformation():
         for (a,b) in unmatched[(c,d)]:
             creationTime[ (c,d) ] = 1 if t == 1 else min([previousCreationTime[(a,b)] for (a,b) in unmatched[(c,d)]])
 
+    newCreationTime = dict()
+    for (c,d) in creationTime:
+        age        = creationTime[(c,d)]
+        neighbours = skel.validNeighbours(c,d) 
+        ages       = [ creationTime[(c,d)] for (c,d) in neighbours if (c,d) in creationTime ]
+
+        # If the creation time of neighbouring pixels differs from the
+        # creation time of the current pixel, it is adjusted.
+        #
+        # This is not the smartest adjustment because it does not take
+        # directions into account. However, it is at least balanced as
+        # it requires only a moderately large number of growth pixels.
+        #
+        # TODO: evaluate what happens when age differences are being
+        #       checked
+        if len(ages) >= 2 and sum(ages) != age*len(ages):
+            newCreationTime[ (c,d) ] = min(age, min(ages))
+
+    for (c,d) in newCreationTime:
+        creationTime[ (c,d) ] = newCreationTime[ (c,d) ]
+
     #for l in backwardMatches.values():
     #    for (c,d) in l:
     #        if (c,d) not in creationTime:

@@ -9,7 +9,7 @@ do for [t = 2:84] {
   set terminal svg background rgb 'white' size 1000,1000
   set output out
 
-  set pointsize 0.5
+  set pointsize 0.1
 
   plot in index 0 with points pt 7 title "Persisting",\
        "" index 1 with points pt 7 title "Decay",\

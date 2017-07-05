@@ -1,6 +1,6 @@
 do for [t = 2:84] {
 
-  load "~/Local/gnuplot-colorbrewer/sequential/Greys.plt"
+  load "/usr/share/gnuplot-colorbrewer/sequential/Greys.plt"
 
   in  = sprintf('t%02d_segment_persistence.txt', t)
   out = sprintf('t%02d_segment_persistence.svg', t)

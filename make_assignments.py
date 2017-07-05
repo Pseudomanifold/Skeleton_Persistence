@@ -23,7 +23,7 @@ def distance( a,b,c,d ):
 # the lists by means of various set operations.
 #
 for filename in sys.argv[1:]:
-    t = int( re.match(r'.*-(\d\d)\..*', os.path.basename(filename) ).group(1) )
+    t = int( re.match(r'.*[-_](\d\d)\..*', os.path.basename(filename) ).group(1) )
     print("Storing t = %02d..." % t)
 
     coordinates[t] = list()

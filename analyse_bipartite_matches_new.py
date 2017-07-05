@@ -106,15 +106,15 @@ def propagateCreationTimeInformation():
         # TODO: evaluate what happens when age differences are being
         #       checked
         if len(ages) >= 2 and sum(ages) != age*len(ages):
-            newCreationTime[ (c,d) ] = min(age, min(ages))
+            try:
+                mode = statistics.mode(ages)
+            except statistics.StatisticsError:
+                mode = int(statistics.median(ages))
+
+            newCreationTime[ (c,d) ] = int(0.5*(age+mode))
 
     for (c,d) in newCreationTime:
         creationTime[ (c,d) ] = newCreationTime[ (c,d) ]
-
-    #for l in backwardMatches.values():
-    #    for (c,d) in l:
-    #        if (c,d) not in creationTime:
-    #            creationTime[ (c,d) ] = t+1
 
     return creationTime
 

@@ -14,6 +14,7 @@
 #   3) Many-to-one matches: This indicates that a structure is destroyed
 #      in the current time step.
 
+import argparse
 import collections
 import re
 import os
@@ -22,18 +23,17 @@ import sys
 
 import skeleton_to_segments as skel
 
-""" Returns path to skeleton of a certain time step """
-def makeSkeletonPath(filename, t):
-    # Prefix for reading the skeleton file that corresponds to a given set
-    # of matches.
-    skeletonPrefix = "viscfing_1-"
+parser = argparse.ArgumentParser()
+parser.add_argument('--width' , type=int, default=839)
+parser.add_argument('--height', type=int, default=396)
+parser.add_argument('FILES', nargs='+')
 
-    skeletonPath =   os.path.abspath(filename+"/../../") + "/"\
-                   + skeletonPrefix                           \
-                   + ("%02d" % t)                             \
-                   + ".txt"
+arguments = parser.parse_args()
 
-    return skeletonPath
+skel.width  = arguments.width
+skel.height = arguments.height
+
+print("Assuming a shape of (%d,%d)" % (skel.width, skel.height), file=sys.stderr)
 
 backwardMatches = collections.defaultdict(list)
 forwardMatches  = collections.defaultdict(list)
@@ -119,7 +119,7 @@ def propagateCreationTimeInformation():
     return creationTime
 
 """ main """
-for filename in sys.argv[1:]:
+for filename in arguments.FILES:
     with open(filename) as f:
 
         # Skip all files that do not contain directed matching information.

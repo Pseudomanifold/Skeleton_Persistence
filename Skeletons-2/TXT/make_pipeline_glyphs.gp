@@ -36,3 +36,19 @@ set pointsize 4
 
 plot x lc rgb 'black' lw 4,\
      "Matches-symmetric-branch-persistence-new/t42_segment_branch_persistence_max.txt" with points pt 7 lc rgb 'black'
+
+# Likewise the analysis step
+
+set terminal png size 500,1000 background rgb 'white'
+set output "Analysis_glyph.png"
+
+set size ratio 2
+
+set xrange [0:84]
+set yrange [0:17000]
+
+set datafile separator ","
+set key autotitle columnheader
+set key off
+
+plot "Matches-symmetric-branch-persistence-new/Age_persistence_statistics.txt" using 0:3 with lines lc rgb 'black' lw 4

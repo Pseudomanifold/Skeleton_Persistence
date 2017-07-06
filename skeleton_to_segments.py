@@ -5,6 +5,9 @@
 # a node whose degree is != 2.
 
 import collections
+import sys
+
+sys.setrecursionlimit(3000)
 
 # FIXME: Make this configurable somewhere
 width  = 839 

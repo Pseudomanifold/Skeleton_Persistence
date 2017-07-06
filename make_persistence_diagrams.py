@@ -3,6 +3,7 @@
 # Takes a set of pixel images tagged with ages and calculates all
 # derived persistence-based concepts for them.
 
+import argparse
 import collections
 import os
 import re
@@ -11,19 +12,29 @@ import sys
 
 import skeleton_to_segments as skel
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--width' , type=int, default=839)
+parser.add_argument('--height', type=int, default=396)
+parser.add_argument('--prefix', type=str, default="viscfing_1-")
+parser.add_argument('--path'  , type=str, default="./Skeletons-2/TXT/")
+parser.add_argument('FILES', nargs='+')
+
+arguments = parser.parse_args()
+
+skel.width  = arguments.width
+skel.height = arguments.height
+
+print("Assuming a shape of (%d,%d)" % (skel.width, skel.height), file=sys.stderr)
+
 """ Returns path to skeleton of a certain time step """
 def makeSkeletonPath(filename, t):
-    #
-    # TODO: make prefix configurable?
-    #
-
     # Prefix for reading the skeleton file that corresponds to a given set
     # of matches.
-    skeletonPrefix = "viscfing_1-"
+    skeletonPrefix = arguments.prefix
 
-    skeletonPath =   os.path.abspath(filename+"/../../") + "/"\
-                   + skeletonPrefix                           \
-                   + ("%02d" % t)                             \
+    skeletonPath =   os.path.abspath(arguments.path) + "/"\
+                   + skeletonPrefix                       \
+                   + ("%02d" % t)                         \
                    + ".txt"
 
     return skeletonPath
@@ -49,8 +60,10 @@ def storePersistenceDiagram(name, persistenceDiagram):
 
 
 """ main """
-for filename in sys.argv[1:]:
+for filename in arguments.FILES:
     with open(filename) as f:
+        print("Processing %s..." % filename)
+
         # Note that matches for t=55 correspond to finding a matching
         # between time steps t=54 and t=55. Hence the subtraction.
         t = int( re.match(r'.*_t(\d\d).*', filename ).group(1) )
@@ -106,14 +119,14 @@ for filename in sys.argv[1:]:
 
                 for (x,y) in segment:
                     mode = min(ages[index])
-                    try:
-                        mode = statistics.mode( ages[index] )
-                    except statistics.StatisticsError:
-                        mode = statistics.mean( ages[index] )
-                        
+                    #try:
+                    #    mode = statistics.mode( ages[index] )
+                    #except statistics.StatisticsError:
+                    #    mode = statistics.mean( ages[index] )
+
                     branchPersistence = abs(mode - branchCreationTime)
                     agePersistence    = abs(segmentCreationTimeMax - branchCreationTime)
-                    growthPersistence = abs(mode - (t+1))
+                    growthPersistence = abs(segmentCreationTimeMax - (t+1))
                     print("%d\t%d\t%d" % (x,y,branchPersistence), file=h)
                     print("%d\t%d\t%d" % (x,y,agePersistence),    file=i)
                     print("%d\t%d\t%d" % (x,y,growthPersistence), file=j)

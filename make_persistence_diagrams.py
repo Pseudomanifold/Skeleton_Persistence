@@ -124,9 +124,9 @@ for filename in arguments.FILES:
                     #except statistics.StatisticsError:
                     #    mode = statistics.mean( ages[index] )
 
-                    branchPersistence = abs(mode - branchCreationTime)
-                    agePersistence    = abs(segmentCreationTimeMax - branchCreationTime)
-                    growthPersistence = abs(segmentCreationTimeMax - (t+1))
+                    branchPersistence = mode - branchCreationTime
+                    agePersistence    = segmentCreationTimeMax - branchCreationTime
+                    growthPersistence = segmentCreationTimeMax - (t+1)
                     print("%d\t%d\t%d" % (x,y,branchPersistence), file=h)
                     print("%d\t%d\t%d" % (x,y,agePersistence),    file=i)
                     print("%d\t%d\t%d" % (x,y,growthPersistence), file=j)

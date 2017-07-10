@@ -1,4 +1,18 @@
 #!/usr/bin/env python3
+#
+# This script calculates a vivacity curve as described in the paper.
+# Vivacity will be calculated based on segments and on pixels, even
+# though this does not have an impact in our experiments.
+#
+# In order to use this script correctly, you must specify a prefix for
+# the individual skeletons, as well as a path where to find them, and
+# their dimensions.
+#
+# A valid call could look this:
+#
+#     ./vivacity_per_segment.py --width 1000 --height 1500 --prefix=Simulation_ --path Simulation Simulation/Growth-persistence/t??_growth_persistence.txt > /tmp/Vivacity_simulation.txt
+#
+# Please see the makefile in the data directory for more information.
 
 import argparse
 import collections

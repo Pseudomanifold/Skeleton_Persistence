@@ -66,5 +66,7 @@ for filename in arguments.FILES:
             # TODO: range (?)
             if growth and min(growth) >= -10:
                 num_active_segments = num_active_segments + 1
+            elif not growth or min(growth) != max(growth):
+                num_segments = num_segments - 1
 
         print("%02d %f %f" % (t, num_active_pixels / num_pixels, num_active_segments / num_segments ))

@@ -373,11 +373,12 @@ for filename in sys.argv[1:]:
                              - len(decay)
 
     irregularEdges = [ e for e in edges if (e[2],e[3]) in irregular ]
+    regularEdges   = set(edges) - set(irregularEdges)
 
     outputMatching = "/tmp/t%02d_matching.txt" % (t+1)
 
     with open(outputMatching, "w") as g:
-        for (a,b,c,d) in irregularEdges:
+        for (a,b,c,d) in edges:
             print("%d\t%d\t%d\t%d" % (a,b,c,d), file=g)
 
     #

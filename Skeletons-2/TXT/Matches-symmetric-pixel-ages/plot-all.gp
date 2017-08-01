@@ -19,8 +19,6 @@ do for [t = 2:84] {
 
   set margin 0,0,0,0
 
-  set pointsize 0.5
-
   plot in using 1:2:3 with points lc rgb 'black' pt 7 ps 1.25,\
        in using 1:2:3 with points palette pt 7
 }

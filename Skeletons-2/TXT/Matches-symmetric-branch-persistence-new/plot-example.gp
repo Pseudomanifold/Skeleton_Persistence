@@ -64,7 +64,7 @@ unset key
 
 load "/usr/share/gnuplot-colorbrewer/sequential/Reds.plt"
 
-set pointsize 0.25
+#set pointsize 0.25
 
 plot in with points pt 7 lc rgb 'black' ps 1.25,\
      in using 1:2:(abs($3)) with points palette pt 7
@@ -75,10 +75,10 @@ set output out
 
 #awk = sprintf("< awk '($3) >= %f || $3 <= %f || $4 >= 1 {print $1, $2, $3}' %s", 0, -2, in)
 
-awk = sprintf("< awk '$3 != -1 && $3 <= 2 {print $1, $2, $3}' %s", in)
+awk = sprintf("< awk '$3 > -2 && $3 <= 2 {print $1, $2, $3}' %s", in)
 
 plot awk with points pt 7 lc rgb 'black' ps 1.25,\
-     awk with points palette pt 7
+     awk using 1:2:(abs($3)) with points palette pt 7
 
 out = 't69_branch_persistence_filtered_combined.png'
 set output out

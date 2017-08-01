@@ -17,9 +17,9 @@ do for [t = 2:84] {
   set terminal png background rgb 'white' size 1000,500
   set output out
 
-  set margin 0,0,0,0
+  set cbtics
 
-  set pointsize 0.5
+  set margin 0,0,0,0
 
   plot in using 1:2:3 with points lc rgb 'black' pt 7 ps 1.25,\
        in using 1:2:3 with points palette pt 7
